@@ -264,7 +264,7 @@ docker run --rm \
 | `-v …:/src:ro` | le code est monté en **lecture seule** |
 | image `13.0.0` | version épinglée, pour des résultats reproductibles |
 
-La base NVD (plusieurs centaines de Mo) est conservée d'un run à l'autre avec `actions/cache`, sous une clé **hebdomadaire** (`dc-data-2026-W44`) : elle est mise à jour une fois par semaine, et les runs intermédiaires ne retéléchargent que les différences.
+La base NVD, volumineuse, est conservée d'un run à l'autre avec `actions/cache`, sous une clé **hebdomadaire** (`dc-data-2026-W44`) : elle est mise à jour une fois par semaine, et les runs intermédiaires ne retéléchargent que les différences.
 
 Résultat sur l'application saine : 14 dépendances identifiées dans `requirements.txt`, **0 CVE**.
 

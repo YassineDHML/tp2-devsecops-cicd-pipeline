@@ -9,6 +9,9 @@
 #
 # Le workflow GitHub Actions appelle chaque etape separement pour qu'elles soient
 # visibles dans l'interface ; en local, "all" reproduit exactement le meme parcours.
+#
+# Variables (valeurs par defaut) : IMAGE=notes-app:ci, OUT_DIR=zap-out, FAIL_ON=high,
+# ZAP_IMAGE=ghcr.io/zaproxy/zaproxy:2.17.0, PYTHON=python3 (a mettre a "python" sous Windows).
 set -euo pipefail
 
 # Git Bash (Windows) convertit les chemins POSIX passes aux programmes natifs, ce qui
