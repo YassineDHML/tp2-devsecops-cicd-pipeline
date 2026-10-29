@@ -1,0 +1,68 @@
+# Pipeline CI/CD du TP2 - phase 1 : pipeline de base (compilation + tests + build).
+# Les controles de securite (SAST, SCA, DAST) sont ajoutes dans les phases suivantes.
+name: CI/CD securise
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Moindre privilege : le jeton du workflow ne peut que lire le depot.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  build-test:
+    name: Build et tests unitaires
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Installer les dependances
+        run: python -m pip install -r requirements-dev.txt
+      - name: Compiler le code (verification syntaxique)
+        run: python -m compileall -q app tests
+      - name: Tests unitaires et couverture (seuil 90 %)
+        run: |
+          mkdir -p ci-reports
+          pytest --junitxml=ci-reports/junit.xml \
+                 --cov=app --cov-report=term-missing \
+                 --cov-report=xml:ci-reports/coverage.xml \
+                 --cov-fail-under=90
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: rapport-tests
+          path: ci-reports/
+          if-no-files-found: ignore
+
+  build-image:
+    name: Build de l'image Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Construire l'image
+        run: docker build -t notes-app:${{ github.sha }} .
+      - name: Exporter l'image (meme artefact pour le DAST et la release)
+        run: docker save notes-app:${{ github.sha }} | gzip > notes-app-image.tar.gz
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: notes-app-image
+          path: notes-app-image.tar.gz
+          retention-days: 7
+          compression-level: 0
