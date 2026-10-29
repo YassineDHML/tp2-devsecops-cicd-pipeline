@@ -29,6 +29,9 @@ CRED_FILE="$STATE_DIR/dast-credentials.env"
 if pwd -W >/dev/null 2>&1; then ROOT="$(pwd -W)"; else ROOT="$(pwd)"; fi
 
 deploy() {
+  # Idempotent : repart d'un environnement vierge meme apres un essai local interrompu
+  docker rm -f "$APP_NAME" >/dev/null 2>&1 || true
+  docker network rm "$NETWORK" >/dev/null 2>&1 || true
   docker network create "$NETWORK" >/dev/null
   mkdir -p "$OUT_DIR"
 
