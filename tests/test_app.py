@@ -326,3 +326,53 @@ def test_security_headers_are_set(client):
     assert resp.headers["X-Content-Type-Options"] == "nosniff"
     assert resp.headers["X-Frame-Options"] == "DENY"
     assert "default-src 'self'" in resp.headers["Content-Security-Policy"]
+
+
+# --------------------------------------------------------------------------
+# Diagnostic reseau (resolution DNS)
+# --------------------------------------------------------------------------
+def test_diagnostic_requires_login(client):
+    resp = client.get("/diagnostic", query_string={"host": "localhost"})
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/login")
+
+
+@pytest.mark.parametrize(
+    "host",
+    [
+        "localhost; id",
+        "$(id)",
+        "exemple.org && cat /etc/passwd",
+        "a|b",
+        "-c1",
+        "..",
+        "<script>alert(1)</script>",
+        "exemple.org\n",
+        "a" * 300,
+    ],
+)
+def test_diagnostic_rejects_dangerous_hostnames(auth, host):
+    assert auth.get("/diagnostic", query_string={"host": host}).status_code == 400
+
+
+def test_diagnostic_resolves_hostname_without_subprocess(auth, notes_app, monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("aucun sous-processus ne doit etre lance")
+
+    monkeypatch.setattr(notes_app.subprocess, "run", forbidden)
+    monkeypatch.setattr(
+        notes_app.socket, "getaddrinfo", lambda host, port, **kwargs: [(2, 1, 6, "", ("93.184.216.34", 0))]
+    )
+    resp = auth.get("/diagnostic", query_string={"host": "exemple.org"})
+    assert resp.status_code == 200
+    assert "93.184.216.34" in resp.get_data(as_text=True)
+
+
+def test_diagnostic_reports_unknown_hostname(auth, notes_app, monkeypatch):
+    def unresolvable(host, port, **kwargs):
+        raise notes_app.socket.gaierror("nom inconnu")
+
+    monkeypatch.setattr(notes_app.socket, "getaddrinfo", unresolvable)
+    resp = auth.get("/diagnostic", query_string={"host": "inconnu.invalid"})
+    assert resp.status_code == 200
+    assert "Aucune adresse trouvee" in resp.get_data(as_text=True)
