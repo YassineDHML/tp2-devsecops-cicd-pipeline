@@ -653,6 +653,7 @@ Les deux étiquettes (SHA et `latest`) pointent vers le même *digest*. Le dép�
 - **Faux négatifs.** Aucun scanner n'est exhaustif : Dependency-Check n'a pas vu l'avis `certifi` ; Bandit ne voit pas le XSS ni les failles de logique ; le DAST ne teste pas les droits d'accès entre utilisateurs.
 - **Faux positifs et variabilité.** Un scan actif n'est pas strictement déterministe. Aucun faux positif n'a été constaté ici, mais un plan de triage (suppressions documentées) serait nécessaire sur un projet plus gros.
 - **pip-audit sans niveau de gravité.** La règle « toute vulnérabilité bloque » peut arrêter le pipeline pour un avis mineur.
+- **Le pipeline est lui-même une cible.** Une pull request s'exécute avec *sa propre* version de `ci.yml` : quelqu'un qui peut ouvrir une PR peut y affaiblir ou supprimer un contrôle, et le gate resterait vert. Ici, le dépôt est personnel et aucune revue n'est exigée ; sur un projet d'équipe, un fichier `CODEOWNERS` devrait imposer la revue d'un responsable sécurité pour `.github/`, `scripts/` et `zap/`.
 - **Images des scanners épinglées par version, pas par empreinte** (`digest`) : un tag de registre peut être déplacé.
 - **Environnement de test en HTTP**, donc sans validation des cookies `Secure` ni de HSTS.
 
@@ -662,6 +663,7 @@ Les deux étiquettes (SHA et `latest`) pointent vers le même *digest*. Le dép�
 - **Dependabot** (ou Renovate) pour proposer automatiquement les mises à jour de dépendances et d'actions GitHub ; c'est aussi lui qui maintiendrait les empreintes de commit des actions.
 - Analyser l'**image** (paquets Debian compris) avec Trivy ou Grype, et chercher des **secrets** dans l'historique avec gitleaks.
 - Générer un **SBOM** et **signer** l'image (cosign), avec attestation de provenance (SLSA).
+- Protéger la configuration du pipeline avec un `CODEOWNERS` et une revue obligatoire sur `.github/workflows/`, `scripts/` et `zap/`.
 - Ajouter une **règle d'approbation manuelle** (environnement GitHub protégé) avant la publication en production.
 - Exécuter un DAST plus long (scan complet nocturne) en plus du scan court de chaque PR.
 
