@@ -32,7 +32,7 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.13"
-  # Seuils de blocage (voir RAPPORT.md, section "Politique de securite")
+  # Seuils de blocage (voir RAPPORT.md, section 4.1 "Politique de blocage")
   BANDIT_FAIL_LEVEL: high      # severite Bandit minimale qui bloque (low | medium | high)
   DC_FAIL_ON_CVSS: "7"         # score CVSS minimal qui bloque (7.0 = High, 9.0 = Critical)
 

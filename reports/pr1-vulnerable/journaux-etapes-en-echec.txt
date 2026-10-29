@@ -1,0 +1,310 @@
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	##[group]Run mkdir -p ~/dc-data ci-reports/dependency-check
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	mkdir -p ~/dc-data ci-reports/dependency-check
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	chmod -R 777 ~/dc-data ci-reports/dependency-check
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	docker run --rm \
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  -v "$PWD:/src:ro" \
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  -v "$HOME/dc-data:/usr/share/dependency-check/data" \
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  -v "$PWD/ci-reports/dependency-check:/report" \
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  owasp/dependency-check:13.0.0 \
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  --project "TP2 Notes App" --scan /src \
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  --exclude "**/.git/**" --exclude "**/ci-reports/**" \
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  --enableExperimental --disableOssIndex \
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  --nvdDatafeed "https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/" \
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  --format HTML --format JSON --out /report \
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  --failOnCVSS "$DC_FAIL_ON_CVSS"
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	shell: /usr/bin/bash -e {0}
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	env:
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  PYTHON_VERSION: 3.13
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  BANDIT_FAIL_LEVEL: high
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  DC_FAIL_ON_CVSS: 7
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  pythonLocation: /opt/hostedtoolcache/Python/3.13.17/x64
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.17/x64/lib/pkgconfig
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.17/x64
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.17/x64
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.17/x64
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	  LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.17/x64/lib
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	##[endgroup]
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	Unable to find image 'owasp/dependency-check:13.0.0' locally
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	13.0.0: Pulling from owasp/dependency-check
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	e6f31ffc071e: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	751d9cdba640: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	bced962b17ba: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	24cadc73030d: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	636ddee25723: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	0b81a78f4d17: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	e4beda22fd5c: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	14bdcc1aee9f: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	63412a635afe: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	4f4fb700ef54: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	c0e17e265e54: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	6de38e210efd: Pulling fs layer
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	24cadc73030d: Waiting
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	636ddee25723: Waiting
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	0b81a78f4d17: Waiting
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	e4beda22fd5c: Waiting
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	14bdcc1aee9f: Waiting
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	63412a635afe: Waiting
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	4f4fb700ef54: Waiting
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	c0e17e265e54: Waiting
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	6de38e210efd: Waiting
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	bced962b17ba: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	bced962b17ba: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	751d9cdba640: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	751d9cdba640: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	e6f31ffc071e: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	e6f31ffc071e: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	636ddee25723: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	636ddee25723: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	24cadc73030d: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	24cadc73030d: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	0b81a78f4d17: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	0b81a78f4d17: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	e6f31ffc071e: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	14bdcc1aee9f: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	14bdcc1aee9f: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	4f4fb700ef54: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	4f4fb700ef54: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	e4beda22fd5c: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	e4beda22fd5c: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	c0e17e265e54: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	c0e17e265e54: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	6de38e210efd: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	6de38e210efd: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	63412a635afe: Verifying Checksum
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	63412a635afe: Download complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	751d9cdba640: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	bced962b17ba: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	24cadc73030d: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	636ddee25723: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	0b81a78f4d17: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	e4beda22fd5c: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	14bdcc1aee9f: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	63412a635afe: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	4f4fb700ef54: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	c0e17e265e54: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	6de38e210efd: Pull complete
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	Digest: sha256:0e8f69ad5b00d62000937f4e57189812343f6903d9c83ee712012d51542a020a
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	Status: Downloaded newer image for owasp/dependency-check:13.0.0
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Checking for updates
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Skipping NVD API Cache check since last check was within 4 hours.
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Should skip RetireJSDataSource update since last update was within period PT24H.
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Should skip HostedSuppressionsDataSource update since last update was within period PT2H.
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Skipping Known Exploited Vulnerabilities update check since last check was within 24 hours.
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Check for updates complete (28 ms)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] 
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	Dependency-Check is an open source tool performing a best effort analysis of 3rd party dependencies; false positives and false negatives may exist in the analysis performed by the tool. Use of the tool and the reporting provided constitutes acceptance for use in an AS IS condition, and there are NO warranties, implied or otherwise, with regard to the analysis or its use. Any use of the tool and the reporting provided is at the user's risk. In no event shall the copyright holder or OWASP be held liable for any damages whatsoever arising out of or in connection with the use of this tool, the analysis performed, or the resulting report.
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	   About ODC: https://dependency-check.github.io/DependencyCheck/general/internals.html
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	   False Positives: https://dependency-check.github.io/DependencyCheck/general/suppression.html
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Analysis Started
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished File Name Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished Python Package Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished pip Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished Dependency Merging Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished Hint Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Created CPE Index (2 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished NPM CPE Analyzer (3 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Created CPE Index (2 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished CPE Analyzer (3 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished False Positive Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished NVD CVE Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished Vulnerability Suppression Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished Known Exploited Vulnerability Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished Dependency Bundling Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Finished Unused Suppression Rule Analyzer (0 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Analysis Complete (6 seconds)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Writing HTML report to: /report/dependency-check-report.html
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[INFO] Writing JSON report to: /report/dependency-check-report.json
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	[ERROR] 
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	One or more dependencies were identified with vulnerabilities that have a CVSS score greater than or equal to '7.0': 
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	requirements.txt (pkg:pypi/certifi@2023.5.7, cpe:2.3:a:certifi:certifi:2023.5.7:*:*:*:*:*:*:*): CVE-2023-37920(9.8), CVE-2024-39689(7.5)
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	See the dependency-check report for more details.
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	
+SCA - OWASP Dependency-Check	GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7	##[error]Process completed with exit code 15.
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	##[group]Run bandit -r app --severity-level "$BANDIT_FAIL_LEVEL"
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	bandit -r app --severity-level "$BANDIT_FAIL_LEVEL"
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	shell: /usr/bin/bash -e {0}
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	env:
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	  PYTHON_VERSION: 3.13
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	  BANDIT_FAIL_LEVEL: high
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	  DC_FAIL_ON_CVSS: 7
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	  pythonLocation: /opt/hostedtoolcache/Python/3.13.17/x64
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	  PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.17/x64/lib/pkgconfig
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	  Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.17/x64
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	  Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.17/x64
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	  Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.17/x64
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	  LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.17/x64/lib
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	##[endgroup]
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	[main]	INFO	profile include tests: None
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	[main]	INFO	profile exclude tests: None
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	[main]	INFO	cli include tests: None
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	[main]	INFO	cli exclude tests: None
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	[main]	INFO	running on Python 3.13.17
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	Run started:2026-10-29 00:32:54.166909+00:00
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	Test results:
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	>> Issue: [B602:subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified, security issue.
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	   Severity: High   Confidence: High
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b602_subprocess_popen_with_shell_equals_true.html
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	   Location: app/app.py:287:13
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	286	    host = request.args.get("host", "localhost")
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	287	    result = subprocess.run("getent hosts " + host, shell=True, capture_output=True, text=True, timeout=10)
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	288	    return "<h1>Resolution de " + host + "</h1><pre>" + (result.stdout or "aucun resultat") + "</pre>"
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	--------------------------------------------------
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	Code scanned:
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee		Total lines of code: 215
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee		Total lines skipped (#nosec): 0
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee		Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	Run metrics:
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee		Total issues (by severity):
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee			Undefined: 0
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee			Low: 2
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee			Medium: 0
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee			High: 1
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee		Total issues (by confidence):
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee			Undefined: 0
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee			Low: 0
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee			Medium: 0
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee			High: 3
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	Files skipped (0):
+SAST - Bandit	GATE SAST : echec si une vulnerabilite de severite HIGH est detectee	##[error]Process completed with exit code 1.
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	##[group]Run pip-audit -r requirements.txt --no-deps --disable-pip --desc off
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	pip-audit -r requirements.txt --no-deps --disable-pip --desc off
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	shell: /usr/bin/bash -e {0}
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	env:
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	  PYTHON_VERSION: 3.13
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	  BANDIT_FAIL_LEVEL: high
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	  DC_FAIL_ON_CVSS: 7
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	  pythonLocation: /opt/hostedtoolcache/Python/3.13.17/x64
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	  PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.17/x64/lib/pkgconfig
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	  Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.17/x64
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	  Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.17/x64
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	  Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.17/x64
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	  LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.17/x64/lib
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	##[endgroup]
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	WARNING:pip_audit._cli:--no-deps is supported, but users are encouraged to fully hash their pinned dependencies
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	WARNING:pip_audit._cli:Consider using a tool like `pip-compile`: https://pip-tools.readthedocs.io/en/latest/#using-hashes
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	Found 6 known vulnerabilities in 1 package
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	Name    Version  ID              Fix Versions
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	------- -------- --------------- ------------
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	certifi 2023.5.7 PYSEC-2023-135  2023.7.22
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	certifi 2023.5.7 PYSEC-2023-135  2023.7.22
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	certifi 2023.5.7 PYSEC-2024-230  2024.7.4
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	certifi 2023.5.7 PYSEC-2024-230  2024.7.4
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	certifi 2023.5.7 PYSEC-2026-4320 2026.10.18
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	certifi 2023.5.7 PYSEC-2026-4320 2026.10.19
+SCA - pip-audit	GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue	##[error]Process completed with exit code 1.
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	##[group]Run bash scripts/dast.sh gate
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	bash scripts/dast.sh gate
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	shell: /usr/bin/bash -e {0}
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	env:
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	  PYTHON_VERSION: 3.13
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	  BANDIT_FAIL_LEVEL: high
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	  DC_FAIL_ON_CVSS: 7
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	  IMAGE: notes-app:92dfd135ccecd5356db753e325134ba182e4e8d5
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	  OUT_DIR: ci-reports/zap
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	  FAIL_ON: high
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	##[endgroup]
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	### DAST - OWASP ZAP
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	ECHEC : 2 constatation(s) atteignent le seuil 'high'.
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	  - High | Cross Site Scripting (Reflected) | CWE-79 | 1 | http://app:5000/diagnostic?host=%3C%2Fh1%3E%3CscrIpt%3Ealert%281%29%3B%3C%2Fs...
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	  - High | Remote OS Command Injection | CWE-78 | 1 | http://app:5000/diagnostic?host=localhost%26cat+%2Fetc%2Fpasswd%26 (param. host)
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	cible analysee : https://app:5000, http://app:5000
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Niveau | Nombre |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	|---|---|
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| High | 2 |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Medium | 4 |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Low | 0 |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Informational | 3 |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	**Gate : BLOQUANT** (seuil de blocage : High et plus, 2 constatation(s) bloquante(s))
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	<details><summary>Detail des constatations</summary>
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Risque | Alerte | CWE | Instances | Exemple |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	|---|---|---|---|---|
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| High | Cross Site Scripting (Reflected) | CWE-79 | 1 | http://app:5000/diagnostic?host=%3C%2Fh1%3E%3CscrIpt%3Ealert%281%29%3B%3C%2Fs... |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| High | Remote OS Command Injection | CWE-78 | 1 | http://app:5000/diagnostic?host=localhost%26cat+%2Fetc%2Fpasswd%26 (param. host) |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Medium | Absence of Anti-CSRF Tokens | CWE-352 | 5 | http://app:5000 |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Medium | CSP: Failure to Define Directive with No Fallback | CWE-693 | 5 | http://app:5000 (param. Content-Security-Policy) |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Medium | CSP: style-src unsafe-inline | CWE-693 | 5 | http://app:5000 (param. Content-Security-Policy) |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Medium | HTTP Only Site | CWE-311 | 1 | http://app:5000/ |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Informational | Authentication Request Identified | - | 1 | http://app:5000/login (param. username) |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Informational | Session Management Response Identified | - | 2 | http://app:5000/login (param. session) |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	| Informational | User Agent Fuzzer | - | 3 | http://app:5000/ (param. Header User-Agent) |
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	</details>
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	
+DAST - OWASP ZAP (environnement ephemere)	GATE DAST : echec si une alerte de risque High est detectee	##[error]Process completed with exit code 1.
+Security gate	Bilan des controles	##[group]Run {
+Security gate	Bilan des controles	{
+Security gate	Bilan des controles	  echo "### Security gate"
+Security gate	Bilan des controles	  echo
+Security gate	Bilan des controles	  echo "| Controle | Resultat |"
+Security gate	Bilan des controles	  echo "|---|---|"
+Security gate	Bilan des controles	  echo "$NEEDS" | jq -r 'to_entries[] | "| \(.key) | \(.value.result) |"'
+Security gate	Bilan des controles	} | tee -a "$GITHUB_STEP_SUMMARY"
+Security gate	Bilan des controles	if echo "$NEEDS" | jq -e 'to_entries | any(.value.result != "success")' > /dev/null; then
+Security gate	Bilan des controles	  echo "::error::Au moins un controle n'est pas vert : version non securisee, publication bloquee."
+Security gate	Bilan des controles	  exit 1
+Security gate	Bilan des controles	fi
+Security gate	Bilan des controles	echo "Tous les controles sont verts : la publication est autorisee."
+Security gate	Bilan des controles	shell: /usr/bin/bash -e {0}
+Security gate	Bilan des controles	env:
+Security gate	Bilan des controles	  PYTHON_VERSION: 3.13
+Security gate	Bilan des controles	  BANDIT_FAIL_LEVEL: high
+Security gate	Bilan des controles	  DC_FAIL_ON_CVSS: 7
+Security gate	Bilan des controles	  NEEDS: {
+Security gate	Bilan des controles	  "build-test": {
+Security gate	Bilan des controles	    "result": "success",
+Security gate	Bilan des controles	    "outputs": {}
+Security gate	Bilan des controles	  },
+Security gate	Bilan des controles	  "build-image": {
+Security gate	Bilan des controles	    "result": "success",
+Security gate	Bilan des controles	    "outputs": {}
+Security gate	Bilan des controles	  },
+Security gate	Bilan des controles	  "sast": {
+Security gate	Bilan des controles	    "result": "failure",
+Security gate	Bilan des controles	    "outputs": {}
+Security gate	Bilan des controles	  },
+Security gate	Bilan des controles	  "sca-pip-audit": {
+Security gate	Bilan des controles	    "result": "failure",
+Security gate	Bilan des controles	    "outputs": {}
+Security gate	Bilan des controles	  },
+Security gate	Bilan des controles	  "sca-dependency-check": {
+Security gate	Bilan des controles	    "result": "failure",
+Security gate	Bilan des controles	    "outputs": {}
+Security gate	Bilan des controles	  },
+Security gate	Bilan des controles	  "dast": {
+Security gate	Bilan des controles	    "result": "failure",
+Security gate	Bilan des controles	    "outputs": {}
+Security gate	Bilan des controles	  }
+Security gate	Bilan des controles	}
+Security gate	Bilan des controles	##[endgroup]
+Security gate	Bilan des controles	### Security gate
+Security gate	Bilan des controles	
+Security gate	Bilan des controles	| Controle | Resultat |
+Security gate	Bilan des controles	|---|---|
+Security gate	Bilan des controles	| build-test | success |
+Security gate	Bilan des controles	| build-image | success |
+Security gate	Bilan des controles	| sast | failure |
+Security gate	Bilan des controles	| sca-pip-audit | failure |
+Security gate	Bilan des controles	| sca-dependency-check | failure |
+Security gate	Bilan des controles	| dast | failure |
+Security gate	Bilan des controles	##[error]Au moins un controle n'est pas vert : version non securisee, publication bloquee.
+Security gate	Bilan des controles	##[error]Process completed with exit code 1.

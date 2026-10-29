@@ -1,0 +1,35 @@
+##[group]Run bash scripts/dast.sh gate
+bash scripts/dast.sh gate
+##[endgroup]
+
+ECHEC : 1 constatation(s) atteignent le seuil 'high'.
+  - High | SQL Injection | CWE-89 | 1 | http://app:5000/preferences (param. theme)
+### DAST - OWASP ZAP
+
+cible analysee : https://app:5000, http://app:5000
+
+| Niveau | Nombre |
+|---|---|
+| High | 1 |
+| Medium | 4 |
+| Low | 0 |
+| Informational | 3 |
+
+**Gate : BLOQUANT** (seuil de blocage : High et plus, 1 constatation(s) bloquante(s))
+
+<details><summary>Detail des constatations</summary>
+
+| Risque | Alerte | CWE | Instances | Exemple |
+|---|---|---|---|---|
+| High | SQL Injection | CWE-89 | 1 | http://app:5000/preferences (param. theme) |
+| Medium | Absence of Anti-CSRF Tokens | CWE-352 | 5 | http://app:5000 |
+| Medium | CSP: Failure to Define Directive with No Fallback | CWE-693 | 5 | http://app:5000 (param. Content-Security-Policy) |
+| Medium | CSP: style-src unsafe-inline | CWE-693 | 5 | http://app:5000 (param. Content-Security-Policy) |
+| Medium | HTTP Only Site | CWE-311 | 1 | http://app:5000/ |
+| Informational | Authentication Request Identified | - | 1 | http://app:5000/login (param. username) |
+| Informational | Session Management Response Identified | - | 2 | http://app:5000/login (param. session) |
+| Informational | User Agent Fuzzer | - | 3 | http://app:5000/ (param. Header User-Agent) |
+
+</details>
+
+##[error]Process completed with exit code 1.

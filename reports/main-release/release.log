@@ -1,0 +1,9 @@
+docker tag "notes-app:${GITHUB_SHA}" "${REGISTRY_IMAGE}:${GITHUB_SHA}"
+docker tag "notes-app:${GITHUB_SHA}" "${REGISTRY_IMAGE}:latest"
+docker push "${REGISTRY_IMAGE}:${GITHUB_SHA}"
+docker push "${REGISTRY_IMAGE}:latest"
+echo "Image publiee : ${REGISTRY_IMAGE}:${GITHUB_SHA}" | tee -a "$GITHUB_STEP_SUMMARY"
+Login Succeeded
+2b88fac488fa183191fab3d6fb1169e53c46d5d0: digest: sha256:ed9629889f2e6cdbd40a4de05ee6e4cd8374300b98a28081229daecc8a7f1d06 size: 2409
+latest: digest: sha256:ed9629889f2e6cdbd40a4de05ee6e4cd8374300b98a28081229daecc8a7f1d06 size: 2409
+Image publiee : ghcr.io/yassinedhml/notes-app:2b88fac488fa183191fab3d6fb1169e53c46d5d0

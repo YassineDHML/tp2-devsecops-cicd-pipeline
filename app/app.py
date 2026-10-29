@@ -9,6 +9,7 @@ SCA (pip-audit, OWASP Dependency-Check) et DAST (OWASP ZAP). Les commentaires
 import functools
 import ipaddress
 import os
+import re
 import secrets
 import socket
 import sqlite3
@@ -271,6 +272,34 @@ def fetch():
     except requests.RequestException:
         abort(502, "Impossible de joindre l'URL")
     return render_template("tool.html", title="Fetch", output=resp.text[:2000])
+
+
+# --------------------------------------------------------------------------
+# Diagnostic reseau pour le support : resolution DNS d'un nom d'hote
+# --------------------------------------------------------------------------
+# Nom d'hote RFC 1123 : labels de 1 a 63 caracteres alphanumeriques ou "-",
+# sans "-" au debut ni a la fin, 253 caracteres au plus.
+HOSTNAME_RE = re.compile(
+    r"(?=.{1,253}\Z)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*"
+)
+
+
+@app.route("/diagnostic")
+@login_required
+def diagnostic():
+    # [SAST B602] Plus de shell : la resolution passe par la bibliotheque standard,
+    # apres validation du nom d'hote par liste blanche de caracteres.
+    # [XSS] La sortie est rendue par un template (auto-echappement Jinja2).
+    host = request.args.get("host", "localhost")
+    if not HOSTNAME_RE.fullmatch(host):
+        abort(400, "Nom d'hote invalide")
+    try:
+        infos = socket.getaddrinfo(host, None, proto=socket.IPPROTO_TCP)
+    except socket.gaierror:
+        output = "Aucune adresse trouvee"
+    else:
+        output = "\n".join(sorted({info[4][0] for info in infos}))
+    return render_template("tool.html", title="Resolution de " + host, output=output)
 
 
 init_db()

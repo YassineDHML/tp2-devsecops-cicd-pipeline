@@ -1,0 +1,8 @@
+SCA - pip-audit	success	17s
+Build et tests unitaires	success	35s
+Build de l'image Docker	success	30s
+SAST - Bandit	success	13s
+SCA - OWASP Dependency-Check	success	34s
+DAST - OWASP ZAP (environnement ephemere)	success	286s
+Security gate	success	2s
+Release (publication de l'image)	success	32s

@@ -1,0 +1,161 @@
+Unable to find image 'ghcr.io/zaproxy/zaproxy:2.17.0' locally
+2.17.0: Pulling from zaproxy/zaproxy
+11422d7ca1a4: Pulling fs layer
+1350f85d0a3a: Pulling fs layer
+77c3706d1a47: Pulling fs layer
+12aea887b674: Pulling fs layer
+eeb39cb7c161: Pulling fs layer
+bac6452d5d74: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+5a68801770d3: Pulling fs layer
+e9cb5483cfe4: Pulling fs layer
+72b5a73c682d: Pulling fs layer
+fb3c36cc7d2a: Pulling fs layer
+d630d470b0d4: Pulling fs layer
+2bcc7509df4a: Pulling fs layer
+06ad76fb5715: Pulling fs layer
+1e16bf51e8a9: Pulling fs layer
+1b9a7c226af9: Pulling fs layer
+f77082ef465a: Pulling fs layer
+6a85a4ab5c39: Pulling fs layer
+c52331fc4e1c: Pulling fs layer
+5a68801770d3: Waiting
+e9cb5483cfe4: Waiting
+72b5a73c682d: Waiting
+fb3c36cc7d2a: Waiting
+d630d470b0d4: Waiting
+2bcc7509df4a: Waiting
+06ad76fb5715: Waiting
+1e16bf51e8a9: Waiting
+1b9a7c226af9: Waiting
+f77082ef465a: Waiting
+6a85a4ab5c39: Waiting
+c52331fc4e1c: Waiting
+12aea887b674: Waiting
+eeb39cb7c161: Waiting
+bac6452d5d74: Waiting
+4f4fb700ef54: Waiting
+11422d7ca1a4: Verifying Checksum
+11422d7ca1a4: Download complete
+12aea887b674: Verifying Checksum
+12aea887b674: Download complete
+eeb39cb7c161: Verifying Checksum
+eeb39cb7c161: Download complete
+bac6452d5d74: Verifying Checksum
+bac6452d5d74: Download complete
+4f4fb700ef54: Verifying Checksum
+4f4fb700ef54: Download complete
+77c3706d1a47: Verifying Checksum
+77c3706d1a47: Download complete
+5a68801770d3: Verifying Checksum
+5a68801770d3: Download complete
+72b5a73c682d: Verifying Checksum
+72b5a73c682d: Download complete
+fb3c36cc7d2a: Verifying Checksum
+fb3c36cc7d2a: Download complete
+d630d470b0d4: Verifying Checksum
+d630d470b0d4: Download complete
+2bcc7509df4a: Verifying Checksum
+2bcc7509df4a: Download complete
+06ad76fb5715: Verifying Checksum
+06ad76fb5715: Download complete
+1e16bf51e8a9: Verifying Checksum
+1e16bf51e8a9: Download complete
+1b9a7c226af9: Verifying Checksum
+1b9a7c226af9: Download complete
+f77082ef465a: Verifying Checksum
+f77082ef465a: Download complete
+1350f85d0a3a: Verifying Checksum
+1350f85d0a3a: Download complete
+6a85a4ab5c39: Verifying Checksum
+6a85a4ab5c39: Download complete
+c52331fc4e1c: Verifying Checksum
+c52331fc4e1c: Download complete
+e9cb5483cfe4: Verifying Checksum
+e9cb5483cfe4: Download complete
+11422d7ca1a4: Pull complete
+1350f85d0a3a: Pull complete
+77c3706d1a47: Pull complete
+12aea887b674: Pull complete
+eeb39cb7c161: Pull complete
+bac6452d5d74: Pull complete
+4f4fb700ef54: Pull complete
+5a68801770d3: Pull complete
+e9cb5483cfe4: Pull complete
+72b5a73c682d: Pull complete
+fb3c36cc7d2a: Pull complete
+d630d470b0d4: Pull complete
+2bcc7509df4a: Pull complete
+06ad76fb5715: Pull complete
+1e16bf51e8a9: Pull complete
+1b9a7c226af9: Pull complete
+f77082ef465a: Pull complete
+6a85a4ab5c39: Pull complete
+c52331fc4e1c: Pull complete
+Digest: sha256:030d3df57735dacbb83464854758e674dd9ad01d79d12a129a8e58b1fd384238
+Status: Downloaded newer image for ghcr.io/zaproxy/zaproxy:2.17.0
+Found Java version 17.0.21
+Available memory: 7932 MB
+Using JVM args: -Xmx1983m
+628 [main] INFO  org.parosproxy.paros.Constant - Copying default configuration to /home/zap/.ZAP/config.xml
+791 [main] INFO  org.parosproxy.paros.Constant - Creating directory /home/zap/.ZAP/session
+793 [main] INFO  org.parosproxy.paros.Constant - Creating directory /home/zap/.ZAP/dirbuster
+795 [main] INFO  org.parosproxy.paros.Constant - Creating directory /home/zap/.ZAP/fuzzers
+796 [main] INFO  org.parosproxy.paros.Constant - Creating directory /home/zap/.ZAP/plugin
+Oct 29, 2026 12:53:05 AM java.util.prefs.FileSystemPreferences$1 run
+INFO: Created user preferences directory.
+Job passiveScan-config set maxAlertsPerRule = 20
+Job requestor set user = tester
+Job requestor set url = http://app:5000/tools/ping?host=127.0.0.1
+Job requestor set method = GET
+Job requestor set url = http://app:5000/tools/fetch?url=https://example.com
+Job requestor set method = GET
+Job spider set context = notes-app
+Job spider set user = tester
+Job spider set maxDuration = 3
+Job spider set maxDepth = 5
+Job spider/stats/null set name = Le spider explore bien l'application authentifiee
+Job spider/stats/null set type = stats
+Job spider/stats/null set statistic = automation.spider.urls.added
+Job spider/stats/null set operator = >=
+Job spider/stats/null set value = 8
+Job spider/stats/null set onFail = Error
+Job spider adding test of type stats : Le spider explore bien l'application authentifiee
+Job passiveScan-wait set maxDuration = 5
+Job activeScan set context = notes-app
+Job activeScan set user = tester
+Job activeScan set maxScanDurationInMins = 12
+Job activeScan set defaultStrength = medium
+Job activeScan set defaultThreshold = medium
+Job report set template = traditional-json
+Job report set reportDir = /zap/wrk
+Job report set reportFile = zap-report
+Job report set reportTitle = TP2 DevSecOps - scan DAST de la Notes App
+Job report set template = traditional-html
+Job report set reportDir = /zap/wrk
+Job report set reportFile = zap-report
+Job report set reportTitle = TP2 DevSecOps - scan DAST de la Notes App
+Job passiveScan-config started
+Job passiveScan-config finished, time taken: 00:00:00
+Job requestor started
+Job requestor requesting URL http://app:5000/tools/ping?host=127.0.0.1 with user tester
+Job requestor requesting URL http://app:5000/tools/fetch?url=https://example.com with user tester
+Job requestor finished, time taken: 00:00:00
+Job spider started
+Job spider requesting URL http://app:5000
+Job spider found 16 URLs
+Job spider test of type stats passed: Le spider explore bien l'application authentifiee [16 >= 8]
+Job spider finished, time taken: 00:00:00
+Job passiveScan-wait started
+Job passiveScan-wait finished, time taken: 00:00:02
+Job activeScan started
+Job activeScan set default strength to MEDIUM
+Job activeScan set default threshold to MEDIUM
+Job activeScan finished, time taken: 00:03:24
+Job report started
+Job report generated report /zap/wrk/zap-report.json
+Job report finished, time taken: 00:00:00
+Job report started
+Job report generated report /zap/wrk/zap-report.html
+Job report finished, time taken: 00:00:00
+Automation plan succeeded!

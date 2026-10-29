@@ -17,6 +17,7 @@
       Connecte : <b>{{ session['username'] }}</b> |
       <a href="{{ url_for('index') }}">Mes notes</a>
       <a href="{{ url_for('preferences') }}">Preferences</a>
+      <a href="{{ url_for('diagnostic', host='localhost') }}">Diagnostic</a>
       <a href="{{ url_for('logout') }}">Deconnexion</a>
     {% else %}
       <a href="{{ url_for('login') }}">Connexion</a>

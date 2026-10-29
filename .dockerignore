@@ -16,3 +16,4 @@ docs
 requirements-dev.txt
 pytest.ini
 .coveragerc
+*.pdf

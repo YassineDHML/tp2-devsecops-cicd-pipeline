@@ -206,6 +206,23 @@ def test_preferences_theme_is_whitelisted(auth):
     assert "<script>" not in page
 
 
+def test_preferences_never_touch_the_database(auth, notes_app, monkeypatch):
+    """Verrouille l'hypothese du filtre de faux positif ZAP (zap/automation.yaml, regle 40018).
+
+    Le scanner a signale une injection SQL sur le parametre `theme`, mais ce parametre est
+    compare a une liste blanche puis range dans le cookie de session : il n'atteint jamais
+    SQL. Si une evolution du code lui faisait interroger la base, ce test echouerait et le
+    filtre devrait etre retire.
+    """
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("/preferences ne doit jamais interroger la base de donnees")
+
+    monkeypatch.setattr(notes_app, "get_db", forbidden)
+    assert auth.post("/preferences", data={"theme": "dark' AND '1'='1' -- "}).status_code == 302
+    assert auth.get("/preferences").status_code == 200
+
+
 # --------------------------------------------------------------------------
 # Outils reseau : ping (injection de commande) et fetch (SSRF)
 # --------------------------------------------------------------------------
@@ -326,3 +343,53 @@ def test_security_headers_are_set(client):
     assert resp.headers["X-Content-Type-Options"] == "nosniff"
     assert resp.headers["X-Frame-Options"] == "DENY"
     assert "default-src 'self'" in resp.headers["Content-Security-Policy"]
+
+
+# --------------------------------------------------------------------------
+# Diagnostic reseau (resolution DNS)
+# --------------------------------------------------------------------------
+def test_diagnostic_requires_login(client):
+    resp = client.get("/diagnostic", query_string={"host": "localhost"})
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/login")
+
+
+@pytest.mark.parametrize(
+    "host",
+    [
+        "localhost; id",
+        "$(id)",
+        "exemple.org && cat /etc/passwd",
+        "a|b",
+        "-c1",
+        "..",
+        "<script>alert(1)</script>",
+        "exemple.org\n",
+        "a" * 300,
+    ],
+)
+def test_diagnostic_rejects_dangerous_hostnames(auth, host):
+    assert auth.get("/diagnostic", query_string={"host": host}).status_code == 400
+
+
+def test_diagnostic_resolves_hostname_without_subprocess(auth, notes_app, monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("aucun sous-processus ne doit etre lance")
+
+    monkeypatch.setattr(notes_app.subprocess, "run", forbidden)
+    monkeypatch.setattr(
+        notes_app.socket, "getaddrinfo", lambda host, port, **kwargs: [(2, 1, 6, "", ("93.184.216.34", 0))]
+    )
+    resp = auth.get("/diagnostic", query_string={"host": "exemple.org"})
+    assert resp.status_code == 200
+    assert "93.184.216.34" in resp.get_data(as_text=True)
+
+
+def test_diagnostic_reports_unknown_hostname(auth, notes_app, monkeypatch):
+    def unresolvable(host, port, **kwargs):
+        raise notes_app.socket.gaierror("nom inconnu")
+
+    monkeypatch.setattr(notes_app.socket, "getaddrinfo", unresolvable)
+    resp = auth.get("/diagnostic", query_string={"host": "inconnu.invalid"})
+    assert resp.status_code == 200
+    assert "Aucune adresse trouvee" in resp.get_data(as_text=True)
