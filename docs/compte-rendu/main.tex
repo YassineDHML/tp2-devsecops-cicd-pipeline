@@ -1,0 +1,1009 @@
+\documentclass[11pt,a4paper]{article}
+
+% ---------------------------------------------------------------------------
+% Paquets
+% ---------------------------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,headheight=14pt]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{textcomp}
+\usepackage[colorlinks=true,linkcolor={blue!50!black},urlcolor={blue!50!black}]{hyperref}
+
+\graphicspath{{figures/}{logos/}}
+
+% En-tete / pied de page (comme le compte rendu du TP1)
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{TP2 CI/CD sécurisé}
+\fancyhead[R]{Compte rendu}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Listings
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=fixed,
+  keepspaces=true,
+  showstringspaces=false,
+  upquote=true,
+  tabsize=4,
+  xleftmargin=0pt,
+  framexleftmargin=0pt,
+  aboveskip=6pt,
+  belowskip=8pt,
+  literate={é}{{\'e}}1 {è}{{\`e}}1 {à}{{\`a}}1 {ê}{{\^e}}1 {ô}{{\^o}}1 {î}{{\^i}}1 {û}{{\^u}}1 {ç}{{\c c}}1 {É}{{\'E}}1 {→}{{$\rightarrow$}}1
+}
+\renewcommand{\lstlistingname}{Listing}
+\captionsetup[lstlisting]{labelsep=endash}
+
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\setlist[itemize]{label=---,leftmargin=*}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\setlength{\emergencystretch}{3em}
+
+% Figure encadree : \figshot{fichier}{largeur}{legende}{etiquette}
+\newcommand{\figshot}[4]{%
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=#2\textwidth]{#1}}
+\caption{#3}
+\label{#4}
+\end{figure}}
+
+% ===========================================================================
+\begin{document}
+
+% ---------------------------------------------------------------------------
+% Page de garde
+% ---------------------------------------------------------------------------
+\begin{titlepage}
+\thispagestyle{empty}
+\noindent
+\begin{minipage}[c]{0.2\textwidth}
+  \includegraphics[width=\linewidth]{insat.jpg}
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.56\textwidth}
+  \centering\small
+  RÉPUBLIQUE TUNISIENNE\\
+  Ministère de l'Enseignement Supérieur\\
+  et de la Recherche Scientifique\\
+  Université de Carthage\\
+  \textbf{Institut National des Sciences Appliquées}\\
+  \textbf{et de Technologie}
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.2\textwidth}
+  \includegraphics[width=\linewidth]{ucar.jpg}
+\end{minipage}
+
+\vspace{2.6cm}
+\begin{center}
+  {\large\textsc{DevSecOps}}\\[0.4cm]
+  Spécialité : Génie Logiciel\\
+  Niveau : 5\textsuperscript{e} année
+
+  \vspace{1.4cm}
+  \rule{\textwidth}{0.4pt}\\[0.5cm]
+  {\huge\bfseries TP2 -- CI/CD sécurisé}\\[0.4cm]
+  {\Large\bfseries Intégration de la Sécurité dans un Pipeline CI/CD}\\[0.3cm]
+  \rule{\textwidth}{0.4pt}
+
+  \vspace{1.4cm}
+  {\large Sécurisation d'une application web Flask conteneurisée}\\[0.1cm]
+  Bandit, pip-audit, OWASP Dependency-Check, OWASP ZAP et GitHub Actions
+
+  \vspace{1.6cm}
+  Présenté par :\\[0.15cm]
+  {\large\bfseries Yassine Dahmoul}\\[0.05cm]
+  {\large\bfseries Mohamed Sahbi Ben Kalaia}\\[0.05cm]
+  {\large\bfseries Mohamed Dhia Medini}\\[0.05cm]
+  {\large\bfseries Takoua Ayadi}
+
+
+  \vfill
+  \rule{0.55\textwidth}{0.4pt}\\[0.3cm]
+  \textbf{Année Universitaire : 2026 -- 2027}
+\end{center}
+\end{titlepage}
+
+\setcounter{page}{1}
+\tableofcontents
+\newpage
+
+% ---------------------------------------------------------------------------
+\section{Contexte et Objectifs}
+% ---------------------------------------------------------------------------
+Au TP1, les scans de sécurité étaient lancés \emph{à la main}, une seule fois. Rien n'oblige
+quelqu'un à les relancer après chaque modification, chaque nouveau commit peut introduire une
+faille, et de nouvelles vulnérabilités sont publiées chaque jour sur des bibliothèques qui n'ont
+pas changé. Ce TP automatise ces contrôles dans un \textbf{pipeline CI/CD} qui joue le rôle de
+\textbf{garde-fou} (\emph{guardrail}) : à chaque modification, les mêmes contrôles s'exécutent
+automatiquement, et leur résultat \textbf{décide} de ce qui peut être fusionné et publié.
+
+Trois familles de contrôles, complémentaires, sont intégrées au pipeline :
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}lLL@{}}
+\toprule
+\textbf{Approche} & \textbf{Ce qui est analysé} & \textbf{Outil utilisé} \\
+\midrule
+\textbf{SAST} (\emph{Static Application Security Testing}) & Notre code source, sans l'exécuter & Bandit \\
+\textbf{SCA} (\emph{Software Composition Analysis}) & Les bibliothèques tierces (directes et transitives) & pip-audit, OWASP Dependency-Check \\
+\textbf{DAST} (\emph{Dynamic Application Security Testing}) & L'application \emph{en cours d'exécution}, attaquée de l'extérieur & OWASP ZAP \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent Objectifs principaux (sujet du TP) :
+\begin{itemize}
+  \item Automatiser les tests de sécurité dans un processus de développement continu.
+  \item Comprendre le rôle d'un pipeline CI/CD comme \textbf{garde-fou de sécurité}.
+  \item Configurer des \textbf{règles de validation} qui bloquent les déploiements non sécurisés.
+\end{itemize}
+
+Le travail suit les quatre activités du sujet :
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}lL@{}}
+\toprule
+\textbf{Activité} & \textbf{Réalisation} \\
+\midrule
+1. Pipeline de base & Compilation, tests unitaires et construction de l'image Docker (Partie~I) \\
+2. SAST et SCA & Bandit, pip-audit et Dependency-Check avec des seuils bloquants (Partie~II) \\
+3. DAST & Scan OWASP ZAP authentifié sur un environnement éphémère (Partie~III) \\
+   & Porte de sécurité, protection de la branche et publication conditionnelle (Partie~IV) \\
+4. Validation & Une pull request volontairement vulnérable (pipeline en échec), puis une pull request corrigée (pipeline vert) (Partie~V) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\section{Environnement Technique}
+% ---------------------------------------------------------------------------
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}lL@{}}
+\toprule
+\textbf{Élément} & \textbf{Détail} \\
+\midrule
+Plateforme CI/CD & GitHub Actions (exécuteurs \code{ubuntu-latest}) \\
+Dépôt & \href{https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline}{\code{YassineDHML/tp2-devsecops-cicd-pipeline}} \\
+Application & \emph{Notes App} (Python 3.13, Flask), version corrigée du TP1 \\
+Tests & pytest 9.2.0, pytest-cov 7.1.0 \\
+SAST & Bandit 1.9.4 \\
+SCA & pip-audit 2.10.1 (base PyPA / OSV) ; OWASP Dependency-Check 13.0.0 (base NVD, image Docker) \\
+DAST & OWASP ZAP 2.17.0 (image Docker \code{ghcr.io/zaproxy/zaproxy:2.17.0}), \emph{Automation Framework} \\
+Conteneurisation & Docker : image de l'application, réseau et conteneurs éphémères du DAST \\
+Registre d'images & GitHub Container Registry (\code{ghcr.io}) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent Les images des scanners sont épinglées par version, et toutes les actions GitHub par
+\textbf{empreinte de commit} : un tag peut être déplacé par un attaquant qui prend le contrôle d'une
+action, pas une empreinte.
+
+% ---------------------------------------------------------------------------
+\section{Partie I -- Pipeline de base : compiler et tester}
+% ---------------------------------------------------------------------------
+\subsection{Structure du projet}
+
+\begin{lstlisting}
+tp2-devsecops-cicd-pipeline/
+ .github/workflows/ci.yml     # le pipeline (un seul fichier)
+ app/                         # application Flask issue du TP1
+ tests/                       # tests de l'application et du script de gate
+ scripts/
+   dast.sh                    # environnement ephemere, scan ZAP, gate, destruction
+   security_report.py         # resumes des rapports et regle de blocage du DAST
+ zap/automation.yaml          # plan ZAP : scan authentifie
+ reports/                     # preuves d'execution (PR vulnerable / PR corrigee)
+ Dockerfile  requirements.txt  requirements-dev.txt
+ RAPPORT.md                   # rapport complet au format Markdown
+\end{lstlisting}
+
+Le dépôt est public sur GitHub (Figure~\ref{fig:repo}) : dossiers du projet, dernier commit validé par
+le pipeline et lien vers la pull request ouverte.
+
+\figshot{t_gh_repo.png}{0.92}{Dépôt GitHub (branche de la pull request corrigée) : fichiers du projet et dernier commit validé.}{fig:repo}
+
+\subsection{Application et tests}
+L'application est la version corrigée du TP1 (\emph{Notes App} : comptes utilisateurs, notes,
+recherche, import YAML, préférences, deux outils réseau). Pour que le pipeline ait quelque chose à
+vérifier, une suite \code{pytest} a été ajoutée (client de test Flask, base SQLite temporaire pour
+chaque test) :
+
+\begin{itemize}
+  \item \textbf{comportement fonctionnel} : inscription, connexion, déconnexion, notes, recherche,
+        import, préférences ;
+  \item \textbf{propriétés de sécurité corrigées au TP1} : requêtes paramétrées, échappement HTML,
+        mots de passe hachés, cookie \code{HttpOnly} / \code{SameSite}, YAML sûr, ping sans shell,
+        protection anti-SSRF, en-têtes de sécurité. Si l'une de ces corrections était annulée par
+        erreur, un test échouerait ;
+  \item \textbf{script de gate} : \code{tests/test\_security\_report.py} vérifie la règle de blocage
+        elle-même, car un garde-fou défaillant est pire que pas de garde-fou.
+\end{itemize}
+
+Au total, \textbf{79 tests} (dont 14 pour le script de gate) et \textbf{99~\%} de couverture
+(lignes et branches) de \code{app/app.py}. Le pipeline exige 90~\% (Figure~\ref{fig:pytest}).
+
+\figshot{t_log_pytest.png}{0.85}{Étape \og Tests unitaires et couverture \fg{} du job \emph{Build et tests unitaires} : 79 tests réussis, couverture de 98,96~\%.}{fig:pytest}
+
+\subsection{Étude du fichier \texttt{.github/workflows/ci.yml}}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lL@{}}
+\toprule
+\textbf{Bloc du fichier} & \textbf{Rôle} \\
+\midrule
+\code{on:} \code{pull\_request}, \code{push}, \code{schedule}, \code{workflow\_dispatch} & Contrôle chaque PR \textbf{avant} la fusion (c'est là que le garde-fou agit), le code fusionné sur \code{main}, et une fois par semaine pour détecter les nouvelles CVE sans nouveau commit \\
+\code{permissions: contents: read} & Moindre privilège : le jeton ne peut que lire le dépôt. Seul le job \code{release} obtient \code{packages: write} \\
+\code{concurrency} & Une nouvelle poussée sur une PR annule l'exécution précédente. Jamais sur \code{main} : une publication en cours n'est pas interrompue \\
+\code{env} & Seuils de blocage (\code{BANDIT\_FAIL\_LEVEL}, \code{DC\_FAIL\_ON\_CVSS}) définis une seule fois \\
+\code{uses: actions/...@<empreinte>} & Actions épinglées par empreinte de commit (protection de la chaîne d'approvisionnement) \\
+\code{timeout-minutes} & Un job bloqué ne consomme pas de minutes indéfiniment \\
+\code{if: always()} & Exécute l'étape même après un échec : publication des rapports, destruction de l'environnement éphémère \\
+\code{needs} & Ordonne les jobs : le DAST attend l'image, la release attend la porte de sécurité \\
+\bottomrule
+\end{tabularx}
+\caption{Lecture commentée du fichier de configuration du pipeline (fichier complet en annexe)}
+\end{table}
+
+\subsection{Les deux jobs de la phase 1}
+\paragraph{\code{build-test}.} Python n'est pas compilé, mais deux étapes jouent ce rôle :
+\code{python -m compileall} compile en byte-code \textbf{tous} les fichiers, y compris ceux
+qu'aucun test n'importe, et \code{pytest -{}-cov -{}-cov-fail-under=90} exécute les tests et échoue si
+la couverture est insuffisante. Les rapports JUnit et de couverture sont publiés en artefacts.
+
+\paragraph{\code{build-image}.} \code{docker build} construit \textbf{le livrable}, ce qui vérifie que
+le \code{Dockerfile} et \code{requirements.txt} sont cohérents. L'image est étiquetée avec le SHA du
+commit, exportée (\code{docker save}) et publiée comme artefact d'une journée. Le DAST la teste et la
+release la publie : \textbf{c'est exactement la même image}, pas une reconstruction.
+
+\subsection{Construction progressive du pipeline}
+L'historique de \code{main} suit les activités du sujet. Chaque commit qui contient un pipeline est
+validé par ses propres contrôles : 2 contrôles pour le pipeline de base, 5 avec le SAST et la SCA, 8 avec
+le DAST, la porte de sécurité et la publication (Figure~\ref{fig:commits}).
+
+\figshot{t_gh_commits.png}{0.92}{Historique de \code{main} : le nombre de contrôles réussis par commit passe de 2 à 5 puis à 8.}{fig:commits}
+
+% ---------------------------------------------------------------------------
+\section{Partie II -- SAST et SCA avec seuils bloquants}
+% ---------------------------------------------------------------------------
+\subsection{Politique de blocage}
+Le sujet demande de bloquer le pipeline en cas de vulnérabilité \textbf{critique ou de haute
+sévérité}. Chaque outil a sa propre échelle ; le tableau montre comment la règle est traduite.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lLLL@{}}
+\toprule
+\textbf{Outil} & \textbf{Échelle native} & \textbf{Seuil de blocage} & \textbf{Mécanisme} \\
+\midrule
+\textbf{Bandit} (SAST) & Low, Medium, High (et confiance) & \textbf{High} & \code{bandit -{}-severity-level high} : code de sortie 1 \\
+\textbf{pip-audit} (SCA) & Pas de score CVSS dans la base PyPA / OSV & \textbf{Toute vulnérabilité connue} & Code de sortie 1 \\
+\textbf{Dependency-Check} (SCA) & CVSS : Medium $<$ 7 $\leq$ High $<$ 9 $\leq$ Critical & \textbf{CVSS $\geq$ 7} & \code{-{}-failOnCVSS 7} : code de sortie 15 \\
+\textbf{OWASP ZAP} (DAST) & Informational, Low, Medium, High (pas de \emph{Critical}) & \textbf{High}, le niveau le plus élevé & \code{security\_report.py zap -{}-fail-on high} \\
+\bottomrule
+\end{tabularx}
+\caption{Traduction de la règle \og critique ou haute sévérité \fg{} pour chaque outil}
+\end{table}
+
+\noindent Les constatations de niveau inférieur ne bloquent pas, mais elles sont \textbf{affichées}
+dans l'onglet \emph{Summary} du run et conservées dans les rapports. Pour pip-audit, sans score CVSS,
+la règle est plus stricte que celle du sujet : toute vulnérabilité connue bloque, ce qui est peu
+pénalisant car l'outil indique toujours la version corrigée.
+
+\subsection{SAST -- Bandit}
+Le travail est fait en deux temps : d'abord les rapports \textbf{complets}, tous niveaux confondus
+(\code{-{}-exit-zero} : cette étape ne bloque jamais), puis le \textbf{gate}, qui relance Bandit avec le
+seuil et échoue si une constatation l'atteint. Les rapports sont ainsi toujours produits, et le
+journal du gate affiche directement le code fautif.
+
+\begin{lstlisting}[caption={Étapes SAST du pipeline}]
+- name: Rapports complets (tous niveaux, non bloquants)
+  run: |
+    bandit -r app -f json -o ci-reports/bandit.json --exit-zero
+    bandit -r app -f html -o ci-reports/bandit.html --exit-zero
+    python scripts/security_report.py bandit ci-reports/bandit.json
+- name: "GATE SAST : echec si une vulnerabilite de severite HIGH est detectee"
+  run: bandit -r app --severity-level "$BANDIT_FAIL_LEVEL"
+\end{lstlisting}
+
+Sur l'application saine, Bandit signale 2 constatations \emph{Low} (\code{B404}, import de
+\code{subprocess}, et \code{B603}, appel sans shell), analysées et acceptées au TP1 : le gate passe.
+
+\subsection{SCA -- pip-audit}
+pip-audit interroge la base \textbf{PyPA / OSV} (avis GitHub, PyPI) sur les versions figées de
+\code{requirements.txt}, dépendances transitives comprises, et indique la \textbf{version corrigée}.
+
+\begin{lstlisting}[caption={Étapes pip-audit du pipeline}]
+- name: Rapport JSON et resume (non bloquants)
+  run: |
+    pip-audit -r requirements.txt --no-deps --disable-pip -f json -o ci-reports/pip-audit.json || true
+    python scripts/security_report.py pip-audit ci-reports/pip-audit.json
+- name: "GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue"
+  run: pip-audit -r requirements.txt --no-deps --disable-pip --desc off
+\end{lstlisting}
+
+\subsection{SCA -- OWASP Dependency-Check}
+\begin{lstlisting}[caption={Lancement d'OWASP Dependency-Check dans le pipeline}]
+docker run --rm \
+  -v "$PWD:/src:ro" \
+  -v "$HOME/dc-data:/usr/share/dependency-check/data" \
+  -v "$PWD/ci-reports/dependency-check:/report" \
+  owasp/dependency-check:13.0.0 \
+  --project "TP2 Notes App" --scan /src \
+  --exclude "**/.git/**" --exclude "**/ci-reports/**" \
+  --enableExperimental --disableOssIndex \
+  --nvdDatafeed "https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/" \
+  --format HTML --format JSON --out /report \
+  --failOnCVSS "$DC_FAIL_ON_CVSS"
+\end{lstlisting}
+
+\begin{itemize}
+  \item \code{-{}-failOnCVSS 7} : \textbf{règle de blocage}, code de sortie 15 dès qu'une CVE a un
+        score supérieur ou égal à 7.
+  \item \code{-{}-enableExperimental} : l'analyseur de \code{requirements.txt} est expérimental ; sans
+        cette option, aucune dépendance Python n'est détectée (constaté au TP1).
+  \item \code{-{}-nvdDatafeed} : miroir officiel de la base NVD (le téléchargement par l'API est très
+        lent sans clé). La base est conservée d'un run à l'autre avec \code{actions/cache}, sous une
+        clé \textbf{hebdomadaire}.
+  \item Le code est monté en \textbf{lecture seule} (\code{:ro}) et l'image est épinglée en version
+        \code{13.0.0}.
+\end{itemize}
+
+Sur l'application saine : 14 dépendances identifiées dans \code{requirements.txt}, \textbf{0 CVE}.
+
+\subsection{Lisibilité des résultats}
+Le script \code{scripts/security\_report.py} lit le rapport JSON de chaque outil et en écrit un résumé
+(comptes par niveau, détail des constatations) dans l'onglet \emph{Summary} du run. Chaque job publie
+aussi ses rapports complets (JSON et HTML) comme \textbf{artefacts}. Pour le DAST, c'est ce script qui
+applique la règle de blocage ; il est donc testé, y compris le cas \og rapport absent ou vide \fg{} :
+le gate \textbf{échoue fermé}, car sans rapport exploitable la vérification ne peut pas être validée.
+
+\subsection{Un constat réel : une dépendance du TP1 devenue vulnérable}\label{sec:certifi}
+En préparant ce TP, pip-audit a été lancé \emph{en local} sur le \code{requirements.txt} du TP1, sans
+aucune modification du code (Figure~\ref{fig:certifi}).
+
+\figshot{t_log_certifi.png}{0.85}{pip-audit sur le \code{requirements.txt} du TP1 : \code{certifi} 2026.7.22 est devenu vulnérable.}{fig:certifi}
+
+L'avis (GHSA-6q48-6c7w-9gw2) a été publié le \textbf{20 octobre 2026}, après le TP1 : les versions de
+\code{certifi} antérieures à 2026.10.19 contiennent des certificats racine \emph{emSign} dont des
+certificats intermédiaires ont des clés privées compromises. La dépendance a été mise à jour
+(\code{certifi==2026.10.23}). Deux enseignements :
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Le code n'a pas changé, mais le risque, si.} C'est la raison d'être de l'exécution
+        planifiée du pipeline : un projet \og terminé \fg{} doit continuer à être contrôlé.
+  \item \textbf{Les outils SCA ne voient pas tous la même chose.} Dependency-Check, lancé sur la même
+        version, a rapporté \textbf{0 vulnérabilité} : son jeu de données (NVD) ne référence que les
+        CVE, or cet avis n'avait pas encore d'identifiant CVE. pip-audit s'appuie sur la base
+        PyPA / OSV, qui reçoit les avis GitHub avant l'attribution d'une CVE. D'où l'intérêt de
+        \textbf{combiner deux sources}.
+\end{enumerate}
+
+% ---------------------------------------------------------------------------
+\section{Partie III -- DAST sur un environnement éphémère}
+% ---------------------------------------------------------------------------
+\subsection{Pourquoi un DAST}
+Le SAST lit le code ; le DAST \textbf{attaque l'application qui tourne}, comme le ferait un
+attaquant, sans connaître le code. Il voit ce que le SAST ne peut pas voir : la configuration réelle
+(en-têtes, cookies), l'effet d'une entrée sur la page produite, ce qu'une route répond sans
+authentification. Le prix : il est plus lent et il faut une application déployée.
+
+\subsection{L'environnement éphémère}
+\og Éphémère \fg{} signifie créé pour un seul scan, \textbf{identique à chaque fois}, et détruit
+ensuite. Le script \code{scripts/dast.sh} en pilote le cycle de vie ; le workflow appelle chaque étape
+séparément pour qu'elles soient visibles dans l'interface (Figure~\ref{fig:jobdast}).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}llL@{}}
+\toprule
+\textbf{Étape du job \code{dast}} & \textbf{Commande} & \textbf{Ce qui se passe} \\
+\midrule
+Charger l'image & \code{docker load} & Récupère l'image construite par \code{build-image} : c'est le livrable, pas une reconstruction \\
+\textbf{Déployer} & \code{dast.sh deploy} & Crée un réseau Docker dédié, lance le conteneur applicatif, attend qu'il réponde, crée un compte de test \\
+\textbf{Scanner} & \code{dast.sh scan} & Lance ZAP dans un second conteneur du même réseau (cible \code{http://app:5000}) \\
+\textbf{Gate} & \code{dast.sh gate} & Lit le rapport ZAP, échoue s'il contient une alerte High \\
+\textbf{Détruire} & \code{dast.sh destroy} & Supprime conteneur et réseau, même si le scan a échoué (\code{if: always()}) \\
+\bottomrule
+\end{tabularx}
+\caption{Cycle de vie de l'environnement éphémère}
+\end{table}
+
+\figshot{t_gh_job_dast.png}{0.9}{Job \emph{DAST -- OWASP ZAP} : chargement de l'image, déploiement, scan, gate et destruction de l'environnement.}{fig:jobdast}
+
+Propriétés de sécurité de cet environnement :
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lL@{}}
+\toprule
+\textbf{Propriété} & \textbf{Mise en œuvre} \\
+\midrule
+Isolation & Réseau Docker dédié ; le port de l'application n'est publié que sur \code{127.0.0.1} du runner \\
+Secrets jetables & \code{SECRET\_KEY} et mot de passe du compte de test générés avec \code{openssl rand -hex} à chaque exécution, stockés dans un fichier en mode \code{0600} supprimé à la fin ; \textbf{rien dans le dépôt ni dans l'image} \\
+État vierge & Base SQLite créée dans le conteneur et détruite avec lui \\
+Pas de compte par défaut & \code{ADMIN\_PASSWORD} n'est pas défini \\
+Processus non privilégié & Le conteneur s'exécute avec l'utilisateur \code{appuser} (durcissement du TP1) \\
+Machine jetable & Le job tourne sur un exécuteur GitHub neuf, détruit à la fin \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Le plan ZAP (Automation Framework)}
+Un fichier YAML décrit le scan, ce qui le rend versionné, relisible et reproductible
+(\code{zap/automation.yaml}, en annexe).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lL@{}}
+\toprule
+\textbf{Élément du plan} & \textbf{Rôle} \\
+\midrule
+\code{contexts} & Périmètre du scan. \code{/logout} est \textbf{exclu} : sinon le spider suivrait le lien \og Déconnexion \fg{} et fermerait sa propre session \\
+\code{authentication: form} & ZAP se connecte via \code{/login} avec le compte jetable (variables d'environnement \code{ZAP\_USER} et \code{ZAP\_PASSWORD}) ; la session est reconnue par la présence du lien \og Deconnexion \fg \\
+\code{alertFilter} & Requalifie en \og faux positif \fg{} \textbf{une} alerte précise, après triage (voir \S\ref{sec:fp}) \\
+\code{requestor} & Déclare \code{/tools/ping} et \code{/tools/fetch}, que \textbf{aucune page HTML ne référence} : sans cela, le spider ne les découvrirait jamais \\
+\code{spider} + test \code{stats} & Explore l'application \textbf{authentifiée}. \textbf{Garde-fou de couverture} : le job échoue si moins de 8 URL sont découvertes (13 à 14 observées), pour qu'un scan vide ne soit jamais validé \\
+\code{activeScan} & \textbf{Attaque} : injections SQL et de commande, XSS, traversée de chemin\ldots{} Politique par défaut, durée maximale de 12 minutes \\
+\code{report} (2 fois) & Rapport JSON (lu par le gate) et rapport HTML (lu par un humain) \\
+\bottomrule
+\end{tabularx}
+\caption{Les éléments du plan ZAP}
+\end{table}
+
+\noindent Un scan \textbf{authentifié} est important : presque toute l'application est derrière la
+connexion. La Figure~\ref{fig:zapplan} montre le journal du plan : les deux routes déclarées, les 14 URL
+découvertes, le garde-fou de couverture satisfait, puis la fin du scan actif.
+
+\figshot{t_log_zap_plan.png}{0.9}{Journal du plan ZAP (PR corrigée) : spider, garde-fou de couverture, scan actif.}{fig:zapplan}
+
+\subsection{Règle de blocage}
+ZAP classe ses alertes en \emph{Informational}, \emph{Low}, \emph{Medium} et \emph{High} ; il n'a pas
+de niveau \emph{Critical}. \textbf{High est donc le niveau \og critique \fg{}} du DAST, et c'est celui
+qui bloque. ZAP n'ayant pas d'option équivalente à \code{-{}-failOnCVSS}, la règle est appliquée par
+\code{security\_report.py zap -{}-fail-on high} sur le rapport JSON. Le script échoue \textbf{fermé} :
+rapport absent, illisible ou sans site analysé, il renvoie le code 2 et le job échoue.
+
+\subsection{Résultats sur l'application saine}
+Le scan de l'application saine donne \textbf{0 alerte High}, 4 Medium et 3 Informational
+(Figure~\ref{fig:zappr2}) : le gate passe. Les alertes Medium ne bloquent pas mais sont de vraies
+observations, à analyser (triage) :
+
+\figshot{r_zap_pr2.png}{0.88}{Rapport ZAP de l'application corrigée : aucune alerte High.}{fig:zappr2}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}LlL@{}}
+\toprule
+\textbf{Alerte (niveau)} & \textbf{CWE} & \textbf{Analyse} \\
+\midrule
+Absence of Anti-CSRF Tokens (Medium) & 352 & \textbf{Vraie faiblesse} : pas de jeton CSRF dans les formulaires. Le cookie \code{SameSite=Lax} limite le risque. Correctif : Flask-WTF \\
+CSP: Failure to Define Directive with No Fallback (Medium) & 693 & \code{frame-ancestors} et \code{form-action} n'héritent pas de \code{default-src}. Correctif : les ajouter à la politique \\
+CSP: style-src unsafe-inline (Medium) & 693 & Le CSS est dans une balise \code{<style>}. Correctif : fichier statique, retrait de \code{'unsafe-inline'} \\
+HTTP Only Site (Medium) & 311 & \textbf{Attendu} : l'environnement éphémère sert l'application en HTTP. En production : HTTPS, HSTS, cookie \code{Secure} \\
+3 alertes Informational & -- & Informations de ZAP sur son propre fonctionnement \\
+\bottomrule
+\end{tabularx}
+\caption{Triage des alertes de niveau Medium (hors périmètre du TP, laissées en l'état)}
+\end{table}
+
+\subsection{Un faux positif rencontré : triage et filtre ciblé}\label{sec:fp}
+Pendant la validation, un run de la PR corrigée a été \textbf{bloqué par le DAST}, alors que le code
+applicatif n'avait pas changé depuis le run précédent, entièrement vert : le commit ne modifiait que la
+documentation (Figures~\ref{fig:runfp} et~\ref{fig:logfp}).
+
+\figshot{t_gh_run_fp.png}{0.92}{Exécution n\textsuperscript{o}10 de la PR corrigée : seul le job DAST (et donc la porte de sécurité) est en échec.}{fig:runfp}
+
+\figshot{t_log_fp.png}{0.85}{Le gate DAST signale une injection SQL (High) sur \code{POST /preferences}, paramètre \code{theme}.}{fig:logfp}
+
+Le gate a fait son travail (une alerte High bloque). Reste à décider si l'alerte est fondée : c'est le
+\textbf{triage}, en trois temps.
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Lire l'alerte} (Figure~\ref{fig:zapfp}). ZAP a utilisé sa règle de détection
+        \emph{booléenne} : il compare les pages obtenues avec \code{dark' AND '1'='1' -- } et
+        \code{dark' AND '1'='2' -- }. Il n'y a ni message d'erreur SQL ni donnée extraite : la seule
+        preuve est une différence entre deux pages, avec une confiance \emph{Medium}.
+  \item \textbf{Lire le code.} Dans \code{/preferences}, \code{theme} est comparé à la liste blanche
+        \code{\{"light", "dark"\}} puis rangé dans le cookie de session. \textbf{Aucune requête SQL} :
+        la route n'utilise même pas la base de données.
+  \item \textbf{Expliquer le mécanisme} (hypothèse la plus probable). La page affichée dépend de la
+        valeur stockée dans la \textbf{session}, que les requêtes du scanner modifient en permanence :
+        le scan actif utilise plusieurs fils d'exécution qui partagent la même session. Deux réponses
+        comparées par ZAP peuvent donc différer parce que l'état a changé entre-temps, pas parce que la
+        saisie a modifié une requête SQL. Sans requête SQL, il n'y a de toute façon pas d'injection SQL
+        possible.
+\end{enumerate}
+
+\figshot{r_zap_fp.png}{0.92}{Détail de l'alerte dans le rapport ZAP : seule une différence de pages, aucune preuve d'exécution SQL.}{fig:zapfp}
+
+\noindent\textbf{Conclusion : faux positif.} Le traitement est un \textbf{filtre étroit, documenté et
+gardé par un test} :
+
+\begin{itemize}
+  \item un job \code{alertFilter} de \code{zap/automation.yaml} requalifie cette alerte en
+        \emph{False Positive} pour \textbf{une seule combinaison} : règle 40018, URL, paramètre
+        \code{theme}, méthode POST. La règle reste active partout ailleurs. Un essai préalable sur une
+        autre alerte a confirmé que le filtre n'écarte que l'instance visée (5 instances ramenées à 4) ;
+  \item le test \code{test\_preferences\_never\_touch\_the\_database} \textbf{verrouille l'hypothèse} :
+        si une évolution du code faisait utiliser SQL à cette route, le test échouerait et le filtre
+        devrait être retiré ;
+  \item les preuves du run bloqué sont conservées dans \code{reports/pr2-faux-positif/}.
+\end{itemize}
+
+\noindent Ce qu'on ne fait \textbf{pas} : relancer le job jusqu'à ce qu'il passe (cela masquerait aussi
+une vraie vulnérabilité intermittente), baisser le seuil global ou désactiver la règle d'injection SQL.
+Le run suivant, avec le filtre, est repassé au vert (Figure~\ref{fig:actions}).
+
+\figshot{t_gh_actions.png}{0.9}{Liste des exécutions du pipeline : \#5 en échec (PR vulnérable), \#6 vert, \#7 à \#9 annulées par un \emph{push} plus récent, \#10 bloquée par le faux positif, \#11 verte.}{fig:actions}
+
+% ---------------------------------------------------------------------------
+\section{Partie IV -- Porte de sécurité, protection de la branche et publication}
+% ---------------------------------------------------------------------------
+\subsection{Le job \texttt{security-gate}}
+\begin{lstlisting}[caption={Porte de sécurité : agrégat de tous les contrôles}]
+security-gate:
+  name: Security gate
+  needs: [build-test, build-image, sast, sca-pip-audit, sca-dependency-check, dast]
+  if: always()
+  steps:
+    - name: Bilan des controles
+      env:
+        NEEDS: ${{ toJSON(needs) }}
+      run: |
+        ...
+        if echo "$NEEDS" | jq -e 'to_entries | any(.value.result != "success")' > /dev/null; then
+          echo "::error::Au moins un controle n'est pas vert : version non securisee, publication bloquee."
+          exit 1
+        fi
+\end{lstlisting}
+
+Deux détails importants :
+\begin{itemize}
+  \item \textbf{\code{if: always()}}. Par défaut, un job dont une dépendance a échoué est
+        \emph{ignoré}. Or GitHub considère un contrôle obligatoire ignoré comme \textbf{satisfait} :
+        sans \code{if: always()}, un échec du SAST laisserait passer la fusion. Le job doit donc
+        s'exécuter dans tous les cas et échouer lui-même.
+  \item \textbf{\code{result != "success"}}. Le gate échoue non seulement si un contrôle est en échec,
+        mais aussi s'il est \emph{ignoré} ou \emph{annulé} : seul un contrôle explicitement vert compte.
+\end{itemize}
+
+\subsection{Protection de la branche \texttt{main}}
+Un pipeline qui échoue ne protège rien si l'on peut fusionner quand même. La branche \code{main} est
+donc protégée (règle créée avec l'API REST de GitHub, Figure~\ref{fig:protection}) :
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lcL@{}}
+\toprule
+\textbf{Réglage} & \textbf{Valeur} & \textbf{Effet} \\
+\midrule
+Pull request obligatoire & oui & Aucun \emph{push} direct sur \code{main} (0 approbation requise : dépôt personnel) \\
+Contrôle exigé & \textbf{Security gate} & La fusion est impossible tant que ce job n'est pas vert \\
+Branche à jour avant fusion & oui & Le contrôle a bien porté sur le code qui sera fusionné \\
+Inclure les administrateurs & \textbf{oui} & Personne, pas même le propriétaire, ne contourne la règle \\
+\emph{Force push} et suppression & interdits & L'historique de \code{main} ne peut pas être réécrit \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\figshot{t_api_protection.png}{0.82}{Règle de protection de \code{main}, telle que renvoyée par l'API GitHub.}{fig:protection}
+
+La page des branches affiche l'icône de protection à côté de \code{main}, avec le résultat des contrôles
+de chaque branche (Figure~\ref{fig:branches}).
+
+\figshot{t_gh_branches.png}{0.92}{Page des branches : \code{main} protégée (bouclier), 8/8 contrôles réussis.}{fig:branches}
+
+\subsection{Le job \texttt{release} : ne jamais publier une version non sécurisée}
+\begin{lstlisting}[caption={Conditions de la publication}]
+release:
+  needs: security-gate
+  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  permissions:
+    contents: read
+    packages: write
+\end{lstlisting}
+
+Le job télécharge l'image \textbf{testée par le DAST} et la publie sur GitHub Container Registry avec
+deux étiquettes : le SHA du commit et \code{latest}. Il ne s'exécute que sur un \emph{push} sur
+\code{main} et si \code{security-gate} est vert : \textbf{aucun chemin ne publie une image non
+validée}. Le premier run complet sur \code{main} le démontre (Figures~\ref{fig:runmain}
+et~\ref{fig:release}).
+
+\figshot{t_gh_run_main.png}{0.92}{Premier run complet sur \code{main} : les huit jobs sont verts, dont la publication.}{fig:runmain}
+
+\figshot{t_log_release.png}{0.95}{Journal de la publication : les deux étiquettes pointent vers le même \emph{digest}.}{fig:release}
+
+% ---------------------------------------------------------------------------
+\section{Partie V -- Validation : pull request vulnérable, puis corrigée}
+% ---------------------------------------------------------------------------
+\subsection{Scénario}
+Un développeur ajoute une page de diagnostic réseau pour le support :
+\code{/diagnostic?host=\allowbreak<nom>} affiche la résolution DNS d'un nom d'hôte. Deux pull requests
+proposent cette fonctionnalité à partir de \code{main}, branche protégée (Figure~\ref{fig:pulls}). Elles ont été
+ouvertes en même temps et exécutées en parallèle.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}llLl@{}}
+\toprule
+\textbf{Pull request} & \textbf{Branche} & \textbf{Contenu} & \textbf{Exécution} \\
+\midrule
+\href{https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/pull/1}{n° 1} & \code{feature/diagnostic-reseau} & Version \textbf{volontairement vulnérable} et dépendance ancienne & \#5 \\
+\href{https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/pull/2}{n° 2} & \code{fix/diagnostic-securise} & Même fonctionnalité, \textbf{corrigée} & \#6 puis \#11 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\figshot{t_gh_pulls.png}{0.92}{Liste des pull requests : la n°~2 est verte (8/8), la n°~1 est en échec (3/8).}{fig:pulls}
+
+\subsection{Pull request n°~1 : la version vulnérable est bloquée}
+\begin{lstlisting}[language=Python,caption={Code de la route \code{/diagnostic} proposée par la PR n°~1}]
+@app.route("/diagnostic")
+def diagnostic():
+    host = request.args.get("host", "localhost")
+    result = subprocess.run("getent hosts " + host, shell=True, capture_output=True, text=True, timeout=10)
+    return "<h1>Resolution de " + host + "</h1><pre>" + (result.stdout or "aucun resultat") + "</pre>"
+\end{lstlisting}
+
+Un lien \og Diagnostic \fg{} est ajouté dans la barre de navigation, un test vérifie le cas
+nominal, et \code{requirements.txt} épingle \code{certifi==2023.5.7}. Quatre défauts sont introduits :
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}rLL@{}}
+\toprule
+\textbf{\#} & \textbf{Défaut} & \textbf{Catégorie} \\
+\midrule
+1 & Route \textbf{publique} : pas de \code{@login\_required} & Contrôle d'accès défaillant (OWASP A01) \\
+2 & \code{shell=True} avec \code{host} concaténé dans la commande & \textbf{Injection de commande} (CWE-78, OWASP A03) \\
+3 & \code{host} recopié dans une chaîne HTML renvoyée telle quelle & \textbf{XSS réfléchi} (CWE-79, OWASP A03) \\
+4 & \code{certifi==2023.5.7} & Composant vulnérable (OWASP A06) : CVE-2023-37920 (CVSS 9.8) et CVE-2024-39689 (CVSS 7.5) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent\emph{Remarque :} \code{requests} 2.34.2 exige \code{certifi>=2023.5.7} ; c'est la plus ancienne
+version que \code{pip} accepte, et elle est vulnérable. Un premier essai avec \code{certifi==2022.12.7}
+avait échoué dès la résolution des dépendances.
+
+\subsubsection*{Résultat du pipeline}
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lcr@{}}
+\toprule
+\textbf{Job} & \textbf{Résultat} & \textbf{Durée} \\
+\midrule
+Build et tests unitaires & réussi (67 tests) & 25 s \\
+Build de l'image Docker & réussi & 28 s \\
+SAST -- Bandit & \textbf{échec} & 15 s \\
+SCA -- pip-audit & \textbf{échec} & 18 s \\
+SCA -- OWASP Dependency-Check & \textbf{échec} & 34 s \\
+DAST -- OWASP ZAP & \textbf{échec} & 5 min 07 s \\
+\textbf{Security gate} & \textbf{échec} & 4 s \\
+Release & ignorée & -- \\
+\bottomrule
+\end{tabular}
+\caption{Pipeline de la PR n°~1 (exécution \#5)}
+\end{table}
+
+Tous les contrôles se sont exécutés, puisqu'ils sont indépendants : \textbf{un seul run donne la liste
+complète des problèmes}. La publication est ignorée et la protection de \code{main} bloque la fusion
+(Figures~\ref{fig:pr1}, \ref{fig:runpr1} et~\ref{fig:annot}).
+
+\figshot{t_gh_pr1.png}{0.88}{Pull request n°~1 : le dernier commit est marqué en échec, et le commentaire récapitule les contrôles.}{fig:pr1}
+
+\figshot{t_gh_run_pr1.png}{0.92}{Exécution \#5 : build et tests réussis, SAST, SCA, DAST et porte de sécurité en échec, release ignorée.}{fig:runpr1}
+
+\figshot{t_gh_run_pr1_annot.png}{0.92}{Annotations de l'exécution \#5 : code de sortie 1 pour Bandit, pip-audit, ZAP et la porte, code 15 pour Dependency-Check.}{fig:annot}
+
+\subsubsection*{SAST : Bandit détecte l'injection de commande}
+Le gate signale la règle \code{B602} (sévérité High, confiance High) à la ligne 287
+(Figures~\ref{fig:banditlog} et~\ref{fig:banditrep}). Les deux alertes \emph{Low} sont celles de
+l'application saine ; seule la High bloque.
+
+\figshot{t_log_bandit.png}{0.95}{Journal du gate SAST : \code{B602} (High) et code de sortie 1.}{fig:banditlog}
+
+\figshot{r_bandit_pr1.png}{0.88}{Rapport HTML de Bandit sur la PR n°~1 : \code{B602} en rouge.}{fig:banditrep}
+
+\subsubsection*{SCA : pip-audit et Dependency-Check détectent \texttt{certifi}}
+pip-audit signale 3 avis (6 lignes, chacun répété une fois par version corrigée), Dependency-Check
+2 CVE de score élevé (Figures~\ref{fig:pipauditlog}, \ref{fig:dcrep} et~\ref{fig:dclog}).
+
+\figshot{t_log_pipaudit.png}{0.9}{Journal du gate pip-audit : \code{certifi} 2023.5.7 est vulnérable.}{fig:pipauditlog}
+
+\figshot{r_dc_pr1.png}{0.82}{Rapport Dependency-Check : \code{certifi:2023.5.7}, CVE-2023-37920 (CVSS 9.8, Critical) et CVE-2024-39689 (CVSS 7.5, High).}{fig:dcrep}
+
+\figshot{t_log_dc.png}{0.95}{Journal du gate Dependency-Check : seuil CVSS dépassé, code de sortie 15.}{fig:dclog}
+
+\subsubsection*{DAST : ZAP prouve l'exploitation}
+ZAP relève \textbf{2 alertes High} sur \code{/diagnostic} (Figures~\ref{fig:zappr1}, \ref{fig:zapcmd}
+et~\ref{fig:zapxss}) :
+
+\figshot{r_zap_pr1.png}{0.88}{Rapport ZAP sur la PR n°~1 : 2 alertes High, en plus des 4 Medium de l'application saine.}{fig:zappr1}
+
+\figshot{r_zap_pr1_cmdinj.png}{0.95}{\emph{Remote OS Command Injection} : ZAP a envoyé \code{localhost\&cat /etc/passwd\&} et retrouvé \code{root:x:0:0} dans la réponse.}{fig:zapcmd}
+
+\figshot{r_zap_pr1_xss.png}{0.95}{\emph{Cross Site Scripting (Reflected)} : la charge utile est recopiée telle quelle dans la page.}{fig:zapxss}
+
+\figshot{t_log_dast_gate.png}{0.95}{Journal du gate DAST sur la PR n°~1 : deux alertes High, code de sortie 1.}{fig:dastgate}
+
+\noindent Le contenu de \code{/etc/passwd} dans la réponse est la \textbf{preuve} que la commande a été
+exécutée par le serveur. La même attaque, rejouée à la main sur l'image de la PR n°~1, donne
+la Figure~\ref{fig:exploit} ; le HTML injecté est interprété par le navigateur (Figure~\ref{fig:xss}). La
+politique CSP de l'application empêche l'exécution d'un script \emph{inline}, mais pas l'injection de
+balises.
+
+\figshot{a_vuln_exploit.png}{0.8}{Exploitation manuelle de la PR n°~1 : le serveur renvoie \code{/etc/passwd}.}{fig:exploit}
+
+\figshot{a_vuln_xss.png}{0.8}{Injection de HTML dans la réponse : le titre rouge n'existe pas dans le code de la page.}{fig:xss}
+
+\subsubsection*{La porte de sécurité bloque la fusion}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize,caption={Extrait de la sortie de la porte de sécurité sur la PR n°~1}]
+| Controle | Resultat |
+| build-test | success |
+| build-image | success |
+| sast | failure |
+| sca-pip-audit | failure |
+| sca-dependency-check | failure |
+| dast | failure |
+##[error]Au moins un controle n'est pas vert : version non securisee, publication bloquee.
+\end{lstlisting}
+
+\figshot{t_log_gate.png}{0.88}{Journal de la porte de sécurité sur la PR n°~1.}{fig:gate}
+
+\figshot{t_api_merge.png}{0.82}{État de fusion renvoyé par l'API : \code{BLOCKED} pour la PR n°~1, \code{CLEAN} pour la PR n°~2.}{fig:merge}
+
+\subsubsection*{Ce que chaque contrôle a vu}
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}LccccX@{}}
+\toprule
+\textbf{Défaut de la PR n°~1} & \textbf{Tests} & \textbf{Bandit} & \textbf{pip-audit} & \textbf{Dep.-Check} & \textbf{ZAP} \\
+\midrule
+1. Route publique & non vu & non vu & -- & -- & non signalé en tant que tel \\
+2. Injection de commande & non vue & \textbf{détectée} (B602) & -- & -- & \textbf{détectée} (High) \\
+3. XSS réfléchi & non vu & \textbf{non vu} & -- & -- & \textbf{détecté} (High) \\
+4. \code{certifi} vulnérable & non vue & -- & \textbf{détectée} & \textbf{détectée} & -- \\
+\bottomrule
+\end{tabularx}
+\caption{Matrice défauts $\times$ contrôles}
+\end{table}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Les tests unitaires sont verts.} Ils vérifient que la fonctionnalité marche, pas qu'elle
+        est sûre : seuls les contrôles de sécurité arrêtent cette PR.
+  \item \textbf{SAST et DAST se complètent.} L'injection de commande est vue par les deux : Bandit
+        repère le motif \code{shell=True}, ZAP prouve l'exécution. Le XSS n'est vu \textbf{que par le
+        DAST} : \code{"<h1>" + host + "</h1>"} ne contient aucun motif que Bandit sache reconnaître.
+  \item \textbf{Les deux outils SCA concordent} sur le même composant, avec des vocabulaires
+        différents (avis PyPA d'un côté, CVE et score CVSS de l'autre).
+  \item \textbf{Aucun outil ne signale l'absence d'authentification en tant que telle} : le contrôle
+        d'accès relève de la logique métier. Cette règle doit être verrouillée par un \textbf{test
+        unitaire}, ce que fait la PR n°~2.
+\end{enumerate}
+
+\subsection{Pull request n°~2 : la version corrigée passe}
+\begin{lstlisting}[language=Python,caption={Code corrigé de la route \code{/diagnostic} (PR n°~2)}]
+HOSTNAME_RE = re.compile(
+    r"(?=.{1,253}\Z)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*"
+)
+
+@app.route("/diagnostic")
+@login_required
+def diagnostic():
+    host = request.args.get("host", "localhost")
+    if not HOSTNAME_RE.fullmatch(host):
+        abort(400, "Nom d'hote invalide")
+    try:
+        infos = socket.getaddrinfo(host, None, proto=socket.IPPROTO_TCP)
+    except socket.gaierror:
+        output = "Aucune adresse trouvee"
+    else:
+        output = "\n".join(sorted({info[4][0] for info in infos}))
+    return render_template("tool.html", title="Resolution de " + host, output=output)
+\end{lstlisting}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}LL@{}}
+\toprule
+\textbf{Défaut de la PR n°~1} & \textbf{Correction} \\
+\midrule
+Route publique & \code{@login\_required} : redirection vers \code{/login} sans session ; lien affiché aux seuls utilisateurs connectés \\
+Injection de commande & \textbf{Plus aucun sous-processus} : résolution avec \code{socket.getaddrinfo}. Le danger est supprimé à la source plutôt que filtré \\
+Entrée non contrôlée & Nom d'hôte validé par \textbf{liste blanche} (RFC 1123, \code{fullmatch}), erreur 400 sinon \\
+XSS réfléchi & Réponse rendue par un \textbf{template Jinja2} (auto-échappement) au lieu d'une chaîne HTML concaténée \\
+\code{certifi} ancien & Pas d'épinglage : \code{main} garde \code{certifi==2026.10.23} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Les tests ajoutés verrouillent ces propriétés : authentification obligatoire, 9 noms d'hôte dangereux
+rejetés (\code{;}, \code{\$( )}, \code{\&\&}, \code{|}, \code{-c1}, balise \code{<script>}, saut de ligne,
+300 caractères), aucun appel à \code{subprocess}, hôte inconnu.
+
+\subsubsection*{Résultat du pipeline}
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lcr@{}}
+\toprule
+\textbf{Job} & \textbf{Résultat} & \textbf{Durée} \\
+\midrule
+Build et tests unitaires & réussi (78 tests) & 26 s \\
+Build de l'image Docker & réussi & 28 s \\
+SAST -- Bandit & réussi (0 High, 2 Low acceptées) & 17 s \\
+SCA -- pip-audit & réussi (0 vulnérabilité) & 17 s \\
+SCA -- OWASP Dependency-Check & réussi (0 CVE) & 38 s \\
+DAST -- OWASP ZAP & réussi (\textbf{0 High}, 4 Medium) & 4 min 57 s \\
+\textbf{Security gate} & \textbf{réussi} & 3 s \\
+Release & ignorée sur une PR & -- \\
+\bottomrule
+\end{tabular}
+\caption{Pipeline de la PR n°~2 (exécution \#6, commit \code{c93889e})}
+\end{table}
+
+L'état de la PR est \code{CLEAN} (Figure~\ref{fig:merge}) : toutes les règles de la protection de
+\code{main} sont satisfaites et la fusion est autorisée. L'historique de la PR (Figure~\ref{fig:pr2})
+montre aussi l'épisode du faux positif de la \S\ref{sec:fp} : les croix intermédiaires sont des
+exécutions annulées par une poussée plus récente, puis le run bloqué, avant le retour au vert.
+
+\figshot{t_gh_pr2.png}{0.88}{Pull request n°~2 : 6 commits, premier et dernier commits validés.}{fig:pr2}
+
+\figshot{t_gh_run_pr2.png}{0.92}{Exécution \#11 de la PR n°~2 : tous les contrôles sont verts, release ignorée (événement \code{pull\_request}).}{fig:runpr2}
+
+\noindent Les trois scanners n'ont plus rien à signaler (Figures~\ref{fig:banditpr2} et~\ref{fig:dcpr2}, et
+Figure~\ref{fig:zappr2} pour ZAP) :
+
+\figshot{r_bandit_pr2.png}{0.88}{Rapport Bandit sur la PR n°~2 : plus de \code{B602}, seules restent les deux alertes Low acceptées.}{fig:banditpr2}
+
+\figshot{r_dc_pr2.png}{0.82}{Rapport Dependency-Check sur la PR n°~2 : 14 dépendances analysées, aucune vulnérable.}{fig:dcpr2}
+
+\subsubsection*{Comportement de l'application corrigée}
+Sans session, la route redirige vers la page de connexion (Figure~\ref{fig:secure1}). Connecté, un nom
+d'hôte invalide est refusé (HTTP 400, Figure~\ref{fig:secure2}) et un nom valide renvoie ses adresses
+(Figure~\ref{fig:secure3}).
+
+\figshot{a_secure_login_redirect.png}{0.75}{Version corrigée : accès sans session, redirection vers la page de connexion.}{fig:secure1}
+
+\figshot{a_secure_400.png}{0.75}{Version corrigée : la tentative \code{localhost; id} est refusée (HTTP 400).}{fig:secure2}
+
+\figshot{a_secure_diag_ok.png}{0.75}{Version corrigée : un nom d'hôte valide renvoie ses adresses.}{fig:secure3}
+
+\subsection{Publication de l'image}
+Le job \code{release} est \textbf{ignoré sur une pull request} (\code{github.event\_name == 'push'} est
+faux) : c'est ce que l'on observe sur les deux PR. Il s'exécutera après la fusion, sur le \emph{push}
+résultant sur \code{main}, et seulement si la porte de sécurité est verte, comme l'a démontré le run de
+la Figure~\ref{fig:runmain}.
+
+\subsection{Synthèse comparée}
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lLL@{}}
+\toprule
+\textbf{Contrôle} & \textbf{PR n°~1 (vulnérable)} & \textbf{PR n°~2 (corrigée)} \\
+\midrule
+Tests unitaires & 67 réussis & 78 réussis \\
+Bandit & 1 High, 2 Low : \textbf{bloque} & 0 High, 2 Low : passe \\
+pip-audit & 3 avis sur \code{certifi} : \textbf{bloque} & 0 : passe \\
+Dependency-Check & 1 Critical (9.8), 1 High (7.5) : \textbf{bloque} & 0 CVE : passe \\
+ZAP & 2 High, 4 Medium : \textbf{bloque} & 0 High, 4 Medium : passe \\
+Porte de sécurité & \textbf{échec}, état \code{BLOCKED} & réussie, état \code{CLEAN} \\
+Publication & ignorée & ignorée (PR), exécutée après la fusion \\
+\bottomrule
+\end{tabularx}
+\caption{Bilan comparé des deux pull requests}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\section{Conclusion}
+% ---------------------------------------------------------------------------
+Ce TP a transformé les contrôles ponctuels du TP1 en un \textbf{garde-fou permanent}. Chaque
+modification traverse un pipeline qui compile, teste, analyse le code (Bandit), les dépendances
+(pip-audit, Dependency-Check) et l'application en cours d'exécution (OWASP ZAP sur un environnement
+éphémère). Un job unique, \code{Security gate}, agrège les résultats ; la branche \code{main} est
+protégée, y compris pour l'administrateur, et l'image n'est publiée que si tout est vert. La
+validation l'a démontré : la pull request vulnérable, dont les tests unitaires passaient, a été arrêtée
+par quatre contrôles distincts, alors que la version corrigée est passée sans alerte bloquante.
+
+Le TP met en évidence plusieurs points :
+\begin{itemize}
+  \item \textbf{Des tests fonctionnels verts ne disent rien de la sécurité.}
+  \item \textbf{SAST et DAST se complètent} : le XSS n'est vu que par le DAST ; l'injection de commande
+        l'est par les deux.
+  \item \textbf{La SCA doit être continue} : \code{certifi} est devenu vulnérable sans qu'une ligne de
+        code change, et deux outils SCA ne voient pas les mêmes choses.
+  \item \textbf{Un garde-fou doit échouer fermé} : rapport manquant, contrôle ignoré, scan vide, tous
+        ces cas font échouer le pipeline. Un contrôle obligatoire \emph{ignoré} passe pour réussi dans
+        la protection de branche, d'où le \code{if: always()} de la porte de sécurité.
+  \item \textbf{Un DAST produit des faux positifs} : il faut un processus de triage, pas un
+        \og relancer jusqu'à ce que ça passe \fg{} ni une baisse du seuil.
+\end{itemize}
+
+\paragraph{Limites.} La couverture du DAST dépend de ce que ZAP connaît (les routes non liées doivent
+être déclarées) ; aucun scanner n'est exhaustif (Dependency-Check n'a pas vu l'avis \code{certifi}, Bandit
+ne voit pas le XSS) ; le pipeline lui-même est une cible : une PR s'exécute avec sa propre version de
+\code{ci.yml}, d'où l'intérêt d'un \code{CODEOWNERS} imposant une revue sur \code{.github/}.
+
+\paragraph{Pistes d'amélioration.} Corriger les alertes Medium du DAST (protection CSRF avec
+Flask-WTF, CSP complète, HTTPS), Dependabot pour les dépendances et les actions, analyse de l'image avec
+Trivy, recherche de secrets avec gitleaks, SBOM et signature de l'image (cosign), approbation manuelle
+avant la publication, scan DAST complet nocturne.
+
+% ---------------------------------------------------------------------------
+\bigskip
+\section*{Annexe A -- Fichier \texttt{.github/workflows/ci.yml}}\label{sec:ci}
+\addcontentsline{toc}{section}{Annexe A -- Fichier ci.yml}
+% ---------------------------------------------------------------------------
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,caption={Pipeline complet (fichier \code{.github/workflows/ci.yml})}]{../../.github/workflows/ci.yml}
+
+% ---------------------------------------------------------------------------
+\section*{Annexe B -- Plan ZAP \texttt{zap/automation.yaml}}\label{sec:zapplan}
+\addcontentsline{toc}{section}{Annexe B -- Plan ZAP}
+% ---------------------------------------------------------------------------
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,caption={Plan d'automatisation ZAP}]{../../zap/automation.yaml}
+
+% ---------------------------------------------------------------------------
+\section*{Annexe C -- Index des preuves d'exécution}
+\addcontentsline{toc}{section}{Annexe C -- Index des preuves}
+% ---------------------------------------------------------------------------
+Les rapports et journaux des exécutions de référence sont conservés dans le dépôt, dossier
+\code{reports/} (les artefacts GitHub expirent après 90 jours).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}llL@{}}
+\toprule
+\textbf{Dossier} & \textbf{Exécution} & \textbf{Contenu} \\
+\midrule
+\code{pr1-vulnerable/} & \#5, PR n°~1 (\code{0285a71}) & Pipeline en échec : Bandit, pip-audit, Dependency-Check, ZAP, journaux des étapes en échec \\
+\code{pr2-fixed/} & \#6, PR n°~2 (\code{c93889e}) & Pipeline vert : mêmes rapports, sans alerte bloquante \\
+\code{pr2-faux-positif/} & \#10, PR n°~2 (\code{fe474eb}) & DAST bloqué par le faux positif ZAP \\
+\code{main-release/} & \#3, \emph{push} sur \code{main} (\code{2b88fac}) & Résultat des huit jobs et journal de la publication \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent Les figures de ce compte rendu proviennent de ces exécutions : pages GitHub du dépôt (\code{t\_gh\_*}),
+rapports HTML des outils (\code{r\_*}), journaux des étapes (\code{t\_log\_*}) et application exécutée en
+local (\code{a\_*}).
+
+\end{document}

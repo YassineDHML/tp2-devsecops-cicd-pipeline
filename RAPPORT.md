@@ -386,6 +386,8 @@ Le gate a fait son travail (une alerte High bloque). Reste à décider si l'aler
 
 Ce qu'on **ne fait pas** : relancer le job jusqu'à ce qu'il passe (cela masquerait aussi une vraie vulnérabilité intermittente), baisser le seuil global ou désactiver la règle d'injection SQL (le DAST ne détecterait plus une vraie injection ailleurs).
 
+Le run suivant (commit `5aea5dc`, avec le filtre) est repassé au vert : la PR n° 2 est de nouveau à l'état `CLEAN`.
+
 ---
 
 ## 6. Security gate, protection de la branche et publication conditionnelle
@@ -636,7 +638,7 @@ latest: digest: sha256:ed9629889f2e6cdbd40a4de05ee6e4cd8374300b98a28081229daecc8
 Image publiee : ghcr.io/yassinedhml/notes-app:2b88fac488fa183191fab3d6fb1169e53c46d5d0
 ```
 
-Les deux étiquettes (SHA et `latest`) pointent vers le même *digest*. Le dépôt étant privé, l'image l'est aussi.
+Les deux étiquettes (SHA et `latest`) pointent vers le même *digest*. L'image est publiée avec la visibilité par défaut du registre : elle est **privée** (un accès anonyme est refusé) tant qu'elle n'a pas été rendue publique explicitement, même si le dépôt est public.
 
 ### 7.5 Synthèse comparée
 

@@ -6,6 +6,12 @@ Application de prise de notes (Python/Flask) issue du [TP1](https://github.com/Y
 
 Le rapport complet (explications, résultats, démonstration) se trouve dans **[RAPPORT.md](RAPPORT.md)**. Les preuves d'exécution (rapports des scanners, journaux) sont dans [`reports/`](reports/).
 
+Le compte rendu au format PDF, avec captures d'écran, est [Compte_Rendu_TP2_DevSecOps.pdf](Compte_Rendu_TP2_DevSecOps.pdf). Sa source LaTeX est dans `docs/compte-rendu/` ; pour la recompiler (depuis la racine du dépôt) :
+
+```powershell
+docker run --rm -v "${PWD}:/repo" -w /repo/docs/compte-rendu texlive/texlive:latest-medium sh -c "pdflatex main.tex && pdflatex main.tex && pdflatex main.tex"
+```
+
 ## Le pipeline
 
 ```mermaid
