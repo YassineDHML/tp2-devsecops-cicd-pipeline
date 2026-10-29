@@ -1,0 +1,97 @@
+---
+# Plan OWASP ZAP (Automation Framework) : scan DAST authentifie de la Notes App.
+#
+# Lance par scripts/dast.sh dans un conteneur ZAP raccorde au reseau Docker de
+# l'environnement ephemere : l'application y est joignable sous http://app:5000.
+# Variables d'environnement attendues : ZAP_USER et ZAP_PASSWORD (compte jetable
+# cree dans l'environnement ephemere, jamais ecrit dans le depot).
+env:
+  contexts:
+    - name: notes-app
+      urls:
+        - http://app:5000
+      includePaths:
+        - http://app:5000.*
+      excludePaths:
+        # Evite que le scanner se deconnecte en suivant le lien "Deconnexion"
+        - http://app:5000/logout.*
+      authentication:
+        method: form
+        parameters:
+          loginPageUrl: http://app:5000/login
+          loginRequestUrl: http://app:5000/login
+          loginRequestBody: username={%username%}&password={%password%}
+        verification:
+          method: response
+          # Le lien "Deconnexion" n'apparait que lorsque la session est ouverte
+          loggedInRegex: "\\QDeconnexion\\E"
+          loggedOutRegex: "\\QSe connecter\\E"
+      sessionManagement:
+        method: cookie
+      users:
+        - name: tester
+          credentials:
+            username: ${ZAP_USER}
+            password: ${ZAP_PASSWORD}
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  - type: passiveScan-config
+    parameters:
+      maxAlertsPerRule: 20
+
+  # Routes exposees par l'application mais non liees depuis l'interface HTML :
+  # on les declare pour que le scan actif les attaque aussi.
+  - type: requestor
+    parameters:
+      user: tester
+    requests:
+      - url: http://app:5000/tools/ping?host=127.0.0.1
+        method: GET
+      - url: http://app:5000/tools/fetch?url=https://example.com
+        method: GET
+
+  - type: spider
+    parameters:
+      context: notes-app
+      user: tester
+      maxDuration: 3
+      maxDepth: 5
+    tests:
+      # Garde-fou : si l'authentification echoue, le spider ne voit que /login et
+      # /register. Le job echoue alors au lieu de "valider" un scan presque vide.
+      - name: Le spider explore bien l'application authentifiee
+        type: stats
+        statistic: automation.spider.urls.added
+        operator: ">="
+        value: 8
+        onFail: error
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: activeScan
+    parameters:
+      context: notes-app
+      user: tester
+      maxScanDurationInMins: 12
+    policyDefinition:
+      defaultStrength: medium
+      defaultThreshold: medium
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: /zap/wrk
+      reportFile: zap-report
+      reportTitle: TP2 DevSecOps - scan DAST de la Notes App
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: /zap/wrk
+      reportFile: zap-report
+      reportTitle: TP2 DevSecOps - scan DAST de la Notes App
