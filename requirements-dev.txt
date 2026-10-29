@@ -1,0 +1,8 @@
+# Outils de test et de securite utilises par le pipeline CI (versions figees).
+# Les dependances de l'application sont dans requirements.txt (c'est ce fichier
+# qui est analyse par la SCA et installe dans l'image Docker).
+-r requirements.txt
+pytest==9.2.0
+pytest-cov==7.1.0
+bandit==1.9.4
+pip-audit==2.10.1

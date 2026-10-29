@@ -1,0 +1,23 @@
+__pycache__/
+*.pyc
+*.db
+.venv/
+venv/
+.env
+.idea/
+.vscode/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+# Sorties des controles de securite et des tests, en local comme en CI
+# (en CI, elles sont publiees comme artefacts du workflow)
+ci-reports/
+zap-out/
+dc-report/
+# Fichiers de compilation LaTeX (compte rendu)
+docs/compte-rendu/*.aux
+docs/compte-rendu/*.log
+docs/compte-rendu/*.toc
+docs/compte-rendu/*.out
+docs/compte-rendu/main.pdf
