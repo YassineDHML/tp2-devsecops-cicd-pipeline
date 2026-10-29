@@ -13,6 +13,7 @@
 </head>
 <body>
   <nav>
+    <a href="{{ url_for('diagnostic', host='localhost') }}">Diagnostic</a>
     {% if session.get('username') %}
       Connecte : <b>{{ session['username'] }}</b> |
       <a href="{{ url_for('index') }}">Mes notes</a>

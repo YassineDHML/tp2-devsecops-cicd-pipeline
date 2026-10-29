@@ -273,6 +273,21 @@ def fetch():
     return render_template("tool.html", title="Fetch", output=resp.text[:2000])
 
 
+# --------------------------------------------------------------------------
+# Diagnostic reseau pour le support : resolution DNS d'un nom d'hote
+#
+# VOLONTAIREMENT VULNERABLE (demonstration du TP2) : ne jamais fusionner.
+# Defauts : route publique (pas de @login_required), injection de commande
+# (shell=True avec une entree concatenee) et XSS reflechi (reponse HTML non
+# echappee).
+# --------------------------------------------------------------------------
+@app.route("/diagnostic")
+def diagnostic():
+    host = request.args.get("host", "localhost")
+    result = subprocess.run("getent hosts " + host, shell=True, capture_output=True, text=True, timeout=10)
+    return "<h1>Resolution de " + host + "</h1><pre>" + (result.stdout or "aucun resultat") + "</pre>"
+
+
 init_db()
 
 if __name__ == "__main__":

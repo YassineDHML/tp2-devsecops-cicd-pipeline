@@ -326,3 +326,17 @@ def test_security_headers_are_set(client):
     assert resp.headers["X-Content-Type-Options"] == "nosniff"
     assert resp.headers["X-Frame-Options"] == "DENY"
     assert "default-src 'self'" in resp.headers["Content-Security-Policy"]
+
+
+# --------------------------------------------------------------------------
+# Diagnostic reseau
+# --------------------------------------------------------------------------
+def test_diagnostic_shows_resolution_result(client, notes_app, monkeypatch):
+    class Result:
+        stdout = "127.0.0.1       localhost\n"
+        stderr = ""
+
+    monkeypatch.setattr(notes_app.subprocess, "run", lambda *args, **kwargs: Result())
+    resp = client.get("/diagnostic", query_string={"host": "localhost"})
+    assert resp.status_code == 200
+    assert "127.0.0.1" in resp.get_data(as_text=True)
