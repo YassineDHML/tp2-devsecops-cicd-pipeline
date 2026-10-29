@@ -1,0 +1,8 @@
+[2026-10-29 00:33:24 +0000] [1] [INFO] Starting gunicorn 26.2.0
+[2026-10-29 00:33:24 +0000] [1] [INFO] Listening at: http://0.0.0.0:5000 (1)
+[2026-10-29 00:33:24 +0000] [1] [INFO] Using worker: sync
+[2026-10-29 00:33:24 +0000] [7] [INFO] Booting worker with pid: 7
+[2026-10-29 00:33:24 +0000] [8] [INFO] Booting worker with pid: 8
+[2026-10-29 00:33:24 +0000] [1] [INFO] Control socket listening at /home/appuser/.gunicorn/gunicorn.ctl
+[2026-10-29 00:37:21 +0000] [7] [WARNING] Invalid request from ip=172.18.0.3: Invalid HTTP request line: 'GET ?class.module.classLoader.DefaultAssertionStatus=nonsense HTTP/1.1'
+[2026-10-29 00:37:21 +0000] [8] [WARNING] Invalid request from ip=172.18.0.3: Invalid HTTP request line: 'GET ?aaa=bbb HTTP/1.1'

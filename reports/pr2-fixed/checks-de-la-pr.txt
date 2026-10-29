@@ -1,0 +1,8 @@
+Release (publication de l'image)	skipping	0	https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40794746678/job/123190380973	
+Build de l'image Docker	pass	28s	https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40794746678/job/123188361220	
+Build et tests unitaires	pass	26s	https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40794746678/job/123188361196	
+DAST - OWASP ZAP (environnement ephemere)	pass	4m57s	https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40794746678/job/123188537593	
+SAST - Bandit	pass	17s	https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40794746678/job/123188360833	
+SCA - OWASP Dependency-Check	pass	38s	https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40794746678/job/123188361146	
+SCA - pip-audit	pass	17s	https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40794746678/job/123188361423	
+Security gate	pass	3s	https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40794746678/job/123190348026	
