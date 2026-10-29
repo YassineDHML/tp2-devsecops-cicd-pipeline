@@ -6,7 +6,9 @@ from pathlib import Path
 
 import pytest
 
-APP_DIR = Path(__file__).resolve().parents[1] / "app"
+ROOT = Path(__file__).resolve().parents[1]
+APP_DIR = ROOT / "app"
+SCRIPTS_DIR = ROOT / "scripts"
 
 # Le module applicatif lit son environnement et initialise la base a l'import :
 # la configuration de test est donc fixee avant de l'importer.
@@ -14,6 +16,7 @@ os.environ["SECRET_KEY"] = "cle-de-test-sans-valeur-secrete"
 os.environ.pop("ADMIN_PASSWORD", None)
 os.environ["DATABASE_PATH"] = os.path.join(tempfile.mkdtemp(prefix="notes-test-"), "import.db")
 sys.path.insert(0, str(APP_DIR))
+sys.path.insert(0, str(SCRIPTS_DIR))  # scripts/security_report.py (tests du gate)
 
 import app as notes_app_module  # noqa: E402
 

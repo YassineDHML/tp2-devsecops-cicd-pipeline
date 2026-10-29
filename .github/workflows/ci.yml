@@ -1,5 +1,6 @@
-# Pipeline CI/CD du TP2 - phase 1 : pipeline de base (compilation + tests + build).
-# Les controles de securite (SAST, SCA, DAST) sont ajoutes dans les phases suivantes.
+# Pipeline CI/CD du TP2 - phases 1 et 2 : build, tests unitaires, SAST et SCA.
+# Les controles de securite bloquent le pipeline des qu'une vulnerabilite de
+# severite haute ou critique est detectee. Le DAST est ajoute a la phase 3.
 name: CI/CD securise
 
 on:
@@ -7,6 +8,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # Chaque lundi : de nouvelles CVE sont publiees meme sans nouveau commit
+    - cron: "17 5 * * 1"
   workflow_dispatch:
 
 # Moindre privilege : le jeton du workflow ne peut que lire le depot.
@@ -19,8 +23,12 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.13"
+  # Seuils de blocage (voir RAPPORT.md, section "Politique de securite")
+  BANDIT_FAIL_LEVEL: high      # severite Bandit minimale qui bloque (low | medium | high)
+  DC_FAIL_ON_CVSS: "7"         # score CVSS minimal qui bloque (7.0 = High, 9.0 = Critical)
 
 jobs:
+  # ------------------------------------------------------------------ phase 1
   build-test:
     name: Build et tests unitaires
     runs-on: ubuntu-latest
@@ -35,7 +43,7 @@ jobs:
       - name: Installer les dependances
         run: python -m pip install -r requirements-dev.txt
       - name: Compiler le code (verification syntaxique)
-        run: python -m compileall -q app tests
+        run: python -m compileall -q app tests scripts
       - name: Tests unitaires et couverture (seuil 90 %)
         run: |
           mkdir -p ci-reports
@@ -64,5 +72,109 @@ jobs:
         with:
           name: notes-app-image
           path: notes-app-image.tar.gz
-          retention-days: 7
+          retention-days: 1
           compression-level: 0
+
+  # ------------------------------------------------------------------ phase 2
+  sast:
+    name: SAST - Bandit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Installer Bandit
+        run: python -m pip install -r requirements-dev.txt
+      - name: Rapports complets (tous niveaux, non bloquants)
+        run: |
+          mkdir -p ci-reports
+          bandit -r app -f json -o ci-reports/bandit.json --exit-zero
+          bandit -r app -f html -o ci-reports/bandit.html --exit-zero
+          python scripts/security_report.py bandit ci-reports/bandit.json
+      - name: "GATE SAST : echec si une vulnerabilite de severite HIGH est detectee"
+        run: bandit -r app --severity-level "$BANDIT_FAIL_LEVEL"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: rapport-sast-bandit
+          path: ci-reports/
+          if-no-files-found: ignore
+
+  sca-pip-audit:
+    name: SCA - pip-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Installer pip-audit
+        run: python -m pip install -r requirements-dev.txt
+      - name: Rapport JSON et resume (non bloquants)
+        run: |
+          mkdir -p ci-reports
+          pip-audit -r requirements.txt --no-deps --disable-pip -f json -o ci-reports/pip-audit.json || true
+          python scripts/security_report.py pip-audit ci-reports/pip-audit.json
+      # pip-audit n'expose pas de score CVSS (base PyPA/OSV) : toute vulnerabilite
+      # connue de requirements.txt bloque, un correctif existant etant toujours indique.
+      - name: "GATE SCA (1/2) : echec si une dependance a une vulnerabilite connue"
+        run: pip-audit -r requirements.txt --no-deps --disable-pip --desc off
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: rapport-sca-pip-audit
+          path: ci-reports/
+          if-no-files-found: ignore
+
+  sca-dependency-check:
+    name: SCA - OWASP Dependency-Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cle de cache hebdomadaire de la base NVD
+        id: nvd
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+      - name: Cache de la base NVD
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/dc-data
+          key: dc-data-${{ steps.nvd.outputs.week }}
+          restore-keys: dc-data-
+      # --enableExperimental : l'analyseur pip de requirements.txt est experimental
+      # --nvdDatafeed        : miroir officiel de la base NVD (evite l'API NVD, tres lente sans cle)
+      # --failOnCVSS 7       : code de sortie 15 si une CVE de score >= 7 (High/Critical) est trouvee
+      - name: "GATE SCA (2/2) : OWASP Dependency-Check, echec si CVSS >= 7"
+        run: |
+          mkdir -p ~/dc-data ci-reports/dependency-check
+          chmod -R 777 ~/dc-data ci-reports/dependency-check
+          docker run --rm \
+            -v "$PWD:/src:ro" \
+            -v "$HOME/dc-data:/usr/share/dependency-check/data" \
+            -v "$PWD/ci-reports/dependency-check:/report" \
+            owasp/dependency-check:13.0.0 \
+            --project "TP2 Notes App" --scan /src \
+            --exclude "**/.git/**" --exclude "**/ci-reports/**" \
+            --enableExperimental --disableOssIndex \
+            --nvdDatafeed "https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/" \
+            --format HTML --format JSON --out /report \
+            --failOnCVSS "$DC_FAIL_ON_CVSS"
+      - name: Resume du rapport Dependency-Check
+        if: always()
+        run: python scripts/security_report.py dependency-check ci-reports/dependency-check/dependency-check-report.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: rapport-sca-dependency-check
+          path: ci-reports/
+          if-no-files-found: ignore
