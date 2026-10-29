@@ -1,0 +1,8 @@
+SAST - Bandit	success	17s
+Build de l'image Docker	success	32s
+SCA - OWASP Dependency-Check	success	43s
+Build et tests unitaires	success	20s
+SCA - pip-audit	success	20s
+DAST - OWASP ZAP (environnement ephemere)	failure	298s
+Security gate	failure	4s
+Release (publication de l'image)	skipped	0s

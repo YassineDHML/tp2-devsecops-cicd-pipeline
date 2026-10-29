@@ -6,6 +6,7 @@ Rapports et journaux produits par le pipeline lors de la validation du TP2 (voir
 |---|---|---|
 | `pr1-vulnerable/` | [40794743364](https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40794743364) : pull request n° 1, commit `0285a71` | pipeline **en échec** : Bandit, pip-audit, Dependency-Check et ZAP détectent les failles ; Security gate en échec |
 | `pr2-fixed/` | [40794746678](https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40794746678) : pull request n° 2, commit `c93889e` | pipeline **vert** : aucune alerte bloquante |
+| `pr2-faux-positif/` | [40796652999](https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40796652999) : pull request n° 2, commit `fe474eb` | DAST **bloqué par un faux positif** de ZAP (injection SQL signalée sur `/preferences`, paramètre `theme`) : preuves du triage décrit au [§5.6 du rapport](../RAPPORT.md#56-un-faux-positif-rencontré--triage-et-filtre-ciblé) |
 | `main-release/` | [40793697905](https://github.com/YassineDHML/tp2-devsecops-cicd-pipeline/actions/runs/40793697905) : *push* sur `main`, commit `2b88fac` | publication de l'image sur GHCR après un Security gate vert |
 
 Dans `pr1-vulnerable/` et `pr2-fixed/` :

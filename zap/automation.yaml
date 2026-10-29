@@ -43,6 +43,25 @@ jobs:
     parameters:
       maxAlertsPerRule: 20
 
+  # Triage d'un faux positif (voir RAPPORT.md, section 5.6).
+  # La regle "SQL Injection" (40018, detection booleenne par comparaison de pages) s'est
+  # declenchee une fois sur POST /preferences (parametre theme) alors que le code n'avait
+  # pas change : ce parametre n'atteint jamais SQL (il est compare a une liste blanche puis
+  # range dans le cookie de session) et la page affichee depend de l'etat de la session, que
+  # les requetes concurrentes du scanner modifient entre elles.
+  # Le filtre est volontairement etroit (regle + URL + parametre + methode) : la regle reste
+  # active partout ailleurs. Son hypothese est verrouillee par le test
+  # tests/test_app.py::test_preferences_never_touch_the_database.
+  - type: alertFilter
+    alertFilters:
+      - ruleId: 40018
+        newRisk: False Positive
+        context: notes-app
+        url: http://app:5000/preferences
+        parameter: theme
+        methods:
+          - POST
+
   # Routes exposees par l'application mais non liees depuis l'interface HTML :
   # on les declare pour que le scan actif les attaque aussi.
   - type: requestor

@@ -206,6 +206,23 @@ def test_preferences_theme_is_whitelisted(auth):
     assert "<script>" not in page
 
 
+def test_preferences_never_touch_the_database(auth, notes_app, monkeypatch):
+    """Verrouille l'hypothese du filtre de faux positif ZAP (zap/automation.yaml, regle 40018).
+
+    Le scanner a signale une injection SQL sur le parametre `theme`, mais ce parametre est
+    compare a une liste blanche puis range dans le cookie de session : il n'atteint jamais
+    SQL. Si une evolution du code lui faisait interroger la base, ce test echouerait et le
+    filtre devrait etre retire.
+    """
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("/preferences ne doit jamais interroger la base de donnees")
+
+    monkeypatch.setattr(notes_app, "get_db", forbidden)
+    assert auth.post("/preferences", data={"theme": "dark' AND '1'='1' -- "}).status_code == 302
+    assert auth.get("/preferences").status_code == 200
+
+
 # --------------------------------------------------------------------------
 # Outils reseau : ping (injection de commande) et fetch (SSRF)
 # --------------------------------------------------------------------------

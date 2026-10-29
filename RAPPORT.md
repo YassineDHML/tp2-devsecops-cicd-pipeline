@@ -153,7 +153,7 @@ L'application est la version corrigée du TP1 (*Notes App* : comptes utilisateur
 - **propriétés de sécurité corrigées au TP1** : requêtes paramétrées (injection SQL), échappement HTML, mots de passe hachés, cookie `HttpOnly`/`SameSite`, YAML sûr, ping sans shell, protection anti-SSRF, en-têtes de sécurité. Si l'une de ces corrections était annulée par erreur, un test échouerait ;
 - **script de gate** : `tests/test_security_report.py` vérifie la règle de blocage elle-même, car un garde-fou défaillant est pire que pas de garde-fou.
 
-Au total, **78 tests** (dont 14 pour le script de gate) et **99 % de couverture** (lignes et branches) de `app/app.py`. Le seuil exigé par le pipeline est de 90 %.
+Au total, **79 tests** (dont 14 pour le script de gate) et **99 % de couverture** (lignes et branches) de `app/app.py`. Le seuil exigé par le pipeline est de 90 %.
 
 ### 3.2 Étude du fichier `.github/workflows/ci.yml`
 
@@ -331,6 +331,7 @@ ZAP est piloté par son *Automation Framework* : un fichier YAML décrit le scan
 |---|---|
 | `contexts` : `urls`, `includePaths`, `excludePaths` | périmètre du scan. `/logout` est **exclu** : sinon le spider suivrait le lien « Déconnexion » et fermerait sa propre session |
 | `authentication: form` et `users` | ZAP se connecte avec le formulaire `/login` et le compte jetable, transmis par les variables d'environnement `ZAP_USER` et `ZAP_PASSWORD`. La session est reconnue par la présence du lien « Deconnexion » |
+| `alertFilter` | requalifie en « faux positif » **une** alerte précise, après triage (règle, URL, paramètre et méthode ciblés). Voir [§5.6](#56-un-faux-positif-rencontré--triage-et-filtre-ciblé) |
 | `requestor` | déclare `/tools/ping` et `/tools/fetch`, que **aucune page HTML ne référence** : sans cela, le spider ne les découvrirait jamais et elles ne seraient pas attaquées |
 | `spider` | explore l'application **authentifiée** |
 | test `stats` du spider | **garde-fou de couverture** : le job échoue si le spider découvre moins de 8 URL (13 à 14 observées). Si l'authentification cassait silencieusement, ZAP ne verrait que `/login` et `/register`, et le scan « passerait » sans rien avoir testé |
@@ -359,6 +360,31 @@ Le scan de l'application saine (celle de `main`) donne : **0 alerte High**, 4 Me
 | Authentication Request Identified, Session Management Response Identified, User Agent Fuzzer (Informational) | — | informations de ZAP sur son propre fonctionnement, pas des vulnérabilités |
 
 Ces points sont **hors périmètre du TP** et laissés en l'état : l'objectif est de montrer que le pipeline sait distinguer ce qui bloque (High) de ce qui est à planifier (Medium).
+
+### 5.6 Un faux positif rencontré : triage et filtre ciblé
+
+Pendant la validation, un run de la PR n° 2 a été **bloqué par le DAST**, alors que le code applicatif n'avait pas changé depuis le run précédent de la même PR, entièrement vert (le commit ne modifiait que la documentation) :
+
+```
+ECHEC : 1 constatation(s) atteignent le seuil 'high'.
+  - High | SQL Injection | CWE-89 | 1 | http://app:5000/preferences (param. theme)
+```
+
+Le gate a fait son travail (une alerte High bloque). Reste à décider si l'alerte est fondée : c'est le **triage**, en trois temps.
+
+1. **Lire l'alerte.** ZAP a utilisé la règle 40018 en détection *booléenne* : il compare les pages obtenues avec `dark' AND '1'='1' -- ` et `dark' AND '1'='2' -- `. Il n'y a ni message d'erreur SQL ni donnée extraite : la seule preuve est une différence entre deux pages, avec une confiance *Medium*.
+2. **Lire le code.** Dans `/preferences`, `theme` est comparé à la liste blanche `{"light", "dark"}`, puis rangé dans le cookie de session. Aucune requête SQL : la route n'utilise même pas la base de données.
+3. **Expliquer le mécanisme (hypothèse la plus probable).** La page affichée (« Theme actuel : … ») dépend de la valeur stockée dans la **session**, que les requêtes du scanner modifient en permanence : le scan actif utilise plusieurs fils d'exécution, qui partagent la même session authentifiée. Deux réponses comparées par ZAP peuvent donc différer parce que l'état a changé entre-temps, et non parce que la saisie a modifié une requête SQL. C'est le profil classique d'un faux positif de la détection booléenne sur une page qui dépend d'un état. La conclusion ne dépend pas de cette explication : sans requête SQL, il n'y a pas d'injection SQL possible.
+
+**Conclusion : faux positif.** Le même code avait d'ailleurs passé le DAST sans alerte au run précédent (commit `c93889e`).
+
+**Traitement : un filtre étroit, documenté et gardé par un test.**
+
+- `zap/automation.yaml` contient un job `alertFilter` qui requalifie en *False Positive* l'alerte de la règle 40018 pour **`POST /preferences`, paramètre `theme`** uniquement (règle, URL, paramètre et méthode). La règle reste active partout ailleurs. Un essai préalable (filtre de test sur « Absence of Anti-CSRF Tokens », limité à `/preferences`) a montré que le filtre n'écarte que l'instance visée : de 5 instances à 4, les autres pages restant signalées.
+- Le test `test_preferences_never_touch_the_database` **verrouille l'hypothèse** sur laquelle repose le filtre : la route ne doit jamais interroger la base. Si une évolution du code lui faisait utiliser SQL, le test échouerait et le filtre devrait être retiré.
+- Les preuves du run bloqué sont conservées dans [`reports/pr2-faux-positif/`](reports/pr2-faux-positif/).
+
+Ce qu'on **ne fait pas** : relancer le job jusqu'à ce qu'il passe (cela masquerait aussi une vraie vulnérabilité intermittente), baisser le seuil global ou désactiver la règle d'injection SQL (le DAST ne détecterait plus une vraie injection ailleurs).
 
 ---
 
@@ -593,7 +619,9 @@ Les tests ajoutés verrouillent ces propriétés : authentification obligatoire,
 
 Le spider ZAP découvre 14 URL, soit une de plus que sur l'application saine (13) : la nouvelle page est bien explorée, et les alertes restantes sont exactement les 4 Medium et 3 Informational de l'application saine ([§5.5](#55-résultats-sur-lapplication-saine)). Les rapports sont dans [`reports/pr2-fixed/`](reports/pr2-fixed/).
 
-L'état de la PR est `CLEAN` : toutes les règles de la protection de `main` sont satisfaites, la fusion est autorisée.
+À l'issue de ce run, l'état de la PR était `CLEAN` : toutes les règles de la protection de `main` étaient satisfaites, la fusion autorisée.
+
+Un run ultérieur de la même PR (commit `fe474eb`, qui ne modifie que la documentation) a été bloqué par un **faux positif de ZAP** sur `/preferences`. Son triage et le filtre ciblé qui en résulte sont décrits au [§5.6](#56-un-faux-positif-rencontré--triage-et-filtre-ciblé) ; les preuves sont dans [`reports/pr2-faux-positif/`](reports/pr2-faux-positif/).
 
 ### 7.4 Publication de l'image
 
@@ -630,7 +658,7 @@ Les deux étiquettes (SHA et `latest`) pointent vers le même *digest*. Le dép�
 
 | Étape du sujet | Réalisation |
 |---|---|
-| Pipeline de base | compilation (`compileall`), 78 tests (99 % de couverture), build de l'image Docker |
+| Pipeline de base | compilation (`compileall`), 79 tests (99 % de couverture), build de l'image Docker |
 | SAST | Bandit, blocage à partir de la sévérité High |
 | SCA | pip-audit (toute vulnérabilité connue) et Dependency-Check (CVSS ≥ 7) |
 | DAST | ZAP authentifié (spider et scan actif) sur environnement éphémère, blocage à partir du niveau High |
@@ -646,12 +674,13 @@ Les deux étiquettes (SHA et `latest`) pointent vers le même *digest*. Le dép�
 5. **Un contrôle obligatoire ignoré passe pour réussi** dans la protection de branche. C'est la raison d'être de `if: always()` sur le job `security-gate`.
 6. **Le coût est dominé par le DAST** (environ 4 min 45 s sur 6 minutes). Le lancer en parallèle des autres contrôles évite d'allonger le retour d'information.
 7. **Le seuil est un compromis.** Trop bas, il bloque pour des alertes sans conséquence et pousse à contourner le pipeline ; trop haut, il laisse passer des risques réels. Ici, tout ce qui est High bloque, et le reste est visible et à planifier.
+8. **Un DAST produit des faux positifs : il faut un processus de triage.** Un run a été bloqué par une alerte non fondée ([§5.6](#56-un-faux-positif-rencontré--triage-et-filtre-ciblé)). La bonne réponse n'est ni de relancer le job, ni de baisser le seuil : on analyse l'alerte, on la filtre de façon **étroite et documentée**, et on verrouille l'hypothèse par un test.
 
 ### 8.3 Limites
 
 - **Couverture du DAST.** ZAP n'attaque que ce qu'il connaît. Les routes non liées dans l'interface (`/tools/ping`, `/tools/fetch`) ont dû être déclarées à la main dans le plan (`requestor`) ; une nouvelle route de ce type doit y être ajoutée.
 - **Faux négatifs.** Aucun scanner n'est exhaustif : Dependency-Check n'a pas vu l'avis `certifi` ; Bandit ne voit pas le XSS ni les failles de logique ; le DAST ne teste pas les droits d'accès entre utilisateurs.
-- **Faux positifs et variabilité.** Un scan actif n'est pas strictement déterministe. Aucun faux positif n'a été constaté ici, mais un plan de triage (suppressions documentées) serait nécessaire sur un projet plus gros.
+- **Faux positifs et variabilité.** Un scan actif n'est pas strictement déterministe : sur une page qui dépend d'un état (session, base de données), la détection booléenne peut se tromper ([§5.6](#56-un-faux-positif-rencontré--triage-et-filtre-ciblé)). Un faux positif a été traité par un filtre ciblé ; d'autres pourraient apparaître sur d'autres routes à état (par exemple `/register`) et demanderaient le même triage. Sur un projet plus gros, il faudrait un registre des suppressions avec une date de réexamen.
 - **pip-audit sans niveau de gravité.** La règle « toute vulnérabilité bloque » peut arrêter le pipeline pour un avis mineur.
 - **Le pipeline est lui-même une cible.** Une pull request s'exécute avec *sa propre* version de `ci.yml` : quelqu'un qui peut ouvrir une PR peut y affaiblir ou supprimer un contrôle, et le gate resterait vert. Ici, le dépôt est personnel et aucune revue n'est exigée ; sur un projet d'équipe, un fichier `CODEOWNERS` devrait imposer la revue d'un responsable sécurité pour `.github/`, `scripts/` et `zap/`.
 - **Images des scanners épinglées par version, pas par empreinte** (`digest`) : un tag de registre peut être déplacé.
@@ -712,6 +741,9 @@ reports/
 │   ├── rapport-dast-zap/              #   zap-report.json, zap-report.html, zap-run.log, app.log
 │   └── rapport-tests/                 #   junit.xml, coverage.xml
 ├── pr2-fixed/                         # run 40794746678 : PR n° 2 (commit c93889e), pipeline vert (même structure)
+├── pr2-faux-positif/                  # run 40796652999 : PR n° 2 (commit fe474eb), DAST bloqué par un faux positif (§5.6)
+│   ├── jobs.txt, journal-du-gate-dast.txt
+│   └── rapport-dast-zap/              #   zap-report.json, zap-report.html, zap-run.log, app.log
 └── main-release/                      # run 40793697905 : push sur main (commit 2b88fac)
     ├── jobs.txt                       #   résultat et durée de chaque job, dont `release`
     └── release.log                    #   extrait du journal de publication (digest de l'image)
